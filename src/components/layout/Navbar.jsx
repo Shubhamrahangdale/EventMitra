@@ -1,22 +1,46 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Calendar, User, LogIn } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, X, Calendar, User, LogIn, LogOut, Ticket, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Events", href: "/events" },
-    { name: "Organizer", href: "/organizer" },
+    // { name: "Organizer", href: "/organizer" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
 
   const isActive = (href) => location.pathname === href;
+
+  const getInitials = (name) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
@@ -52,18 +76,66 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="w-4 h-4 mr-2" />
-                Login
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/register">
-                <User className="w-4 h-4 mr-2" />
-                Register
-              </Link>
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-muted/50 hover:bg-muted transition-colors">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user.avatar} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                        {getInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-foreground">{user.name}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile?tab=tickets" className="cursor-pointer">
+                      <Ticket className="w-4 h-4 mr-2" />
+                      My Tickets
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile?tab=settings" className="cursor-pointer">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/register">
+                    <User className="w-4 h-4 mr-2" />
+                    Register
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,6 +152,22 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border/50 animate-fade-in">
             <div className="flex flex-col gap-2">
+              {/* User info on mobile */}
+              {user && (
+                <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-muted/50 rounded-lg">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-foreground">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
@@ -95,14 +183,33 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="flex gap-2 mt-4 px-4">
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
-                </Button>
-                <Button size="sm" className="flex-1" asChild>
-                  <Link to="/register" onClick={() => setIsOpen(false)}>Register</Link>
-                </Button>
-              </div>
+
+              {user ? (
+                <>
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsOpen(false)}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  >
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <div className="flex gap-2 mt-4 px-4">
+                  <Button variant="outline" size="sm" className="flex-1" asChild>
+                    <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
+                  </Button>
+                  <Button size="sm" className="flex-1" asChild>
+                    <Link to="/register" onClick={() => setIsOpen(false)}>Register</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
