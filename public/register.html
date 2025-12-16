@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <meta name="description" content="Create your EventMitra account and start organizing amazing events today.">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="auth-container">
     <!-- Left Side - Form -->
@@ -49,6 +51,15 @@
             <input type="password" id="password" placeholder="Create a strong password" required>
           </div>
 
+          <div class="form-group">
+            <label>User Type</label>
+            <select id="role" required>
+              <option value="attendee">Attendee</option>
+              <option value="organizer">Organizer</option>
+            </select>
+          </div>
+
+
           <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
             Create Account
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -59,7 +70,7 @@
         </form>
 
         <p style="text-align: center; margin-top: 2rem; color: var(--muted-foreground);">
-          Already have an account? 
+          Already have an account?
           <a href="login.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Sign in</a>
         </p>
       </div>
@@ -91,17 +102,46 @@
   </div>
 
   <script>
-    function handleRegister(event) {
+    async function handleRegister(event) {
       event.preventDefault();
-      const fullName = document.getElementById('fullName').value;
+
+      const name = document.getElementById('fullName').value;
       const email = document.getElementById('email').value;
       const phone = document.getElementById('phone').value;
       const password = document.getElementById('password').value;
-      
-      // In a real app, this would register with backend
-      alert('Registration functionality requires backend integration. This is a static HTML demo.');
-      console.log('Registration attempt:', { fullName, email, phone, password });
+      const role = document.getElementById('role').value;
+
+      try {
+        const response = await fetch("http://localhost:2511/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            password,
+            role
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert("🎉 Account created successfully!");
+          window.location.href = "login.html";
+        } else {
+          alert("❌ " + result.message);
+        }
+      } catch (error) {
+        alert("🚨 Server not responding");
+        console.error(error);
+      }
     }
   </script>
+
+
 </body>
+
 </html>

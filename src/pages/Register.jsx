@@ -26,7 +26,7 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.password) {
       toast({
         title: "Missing fields",
@@ -35,7 +35,7 @@ const Register = () => {
       });
       return;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -64,18 +64,52 @@ const Register = () => {
     }
 
     setIsLoading(true);
-    
-    // Simulate registration (static - no backend)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Demo Mode",
-      description: "This is a static demo. Backend registration is not connected.",
-    });
-    
+
+    try {
+      const response = await fetch("http://localhost:2511/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: userType,
+        }),
+
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Account Created 🎉",
+          description: "Your account has been successfully created!",
+        });
+
+        window.location.href = "/login";
+      } else {
+        toast({
+          title: "Registration Failed ❌",
+          description: result.message || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Server Error ❌",
+        description: "Unable to connect to server. Check backend.",
+        variant: "destructive",
+      });
+      console.log(error);
+    }
+
     setIsLoading(false);
   };
 
+  //-----------------------
   const features = [
     "Create and manage unlimited events",
     "Access to analytics dashboard",
@@ -231,9 +265,9 @@ const Register = () => {
             </div>
 
             <div className="flex items-start gap-2">
-              <input 
-                type="checkbox" 
-                id="terms" 
+              <input
+                type="checkbox"
+                id="terms"
                 className="mt-1"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}

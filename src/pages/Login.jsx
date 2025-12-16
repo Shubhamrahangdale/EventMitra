@@ -12,41 +12,63 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!email || !password) {
+    toast({
+      title: "Missing fields",
+      description: "Please enter both email and password.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    const response = await fetch("http://localhost:2511/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
       toast({
-        title: "Missing fields",
-        description: "Please enter both email and password.",
+        title: "Login Failed ❌",
+        description: result.message,
         variant: "destructive",
       });
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+ 
+    localStorage.setItem("token", result.token);
+
     
-    // Simulate login (static - no backend)
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    localStorage.setItem("role", result.user.role);
+
     
-    // Check if organizer login (demo)
-    if (email.includes("organizer") || email.includes("admin")) {
-      toast({
-        title: "Welcome, Organizer!",
-        description: "Redirecting to your dashboard...",
-      });
-      setTimeout(() => {
-        window.location.href = "/organizer";
-      }, 500);
-    } else {
-      toast({
-        title: "Welcome Back!",
-        description: "Login successful. This is a demo mode.",
-      });
+    if (result.user.role === "attendee") {
+      window.location.href = "/Profile";
+    } else if (result.user.role === "organizer") {
+      window.location.href = "/OrganizerDashboard";
     }
-    
-    setIsLoading(false);
-  };
+
+  } catch (error) {
+    toast({
+      title: "Server Error ❌",
+      description: "Backend not reachable.",
+      variant: "destructive",
+    });
+    console.error(error);
+  }
+
+  setIsLoading(false);
+};
 
   return (
     <div className="min-h-screen flex">
