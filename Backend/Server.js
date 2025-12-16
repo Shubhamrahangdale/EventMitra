@@ -8,9 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const PORT = 2511;
-const MONGO_URI = "mongodb+srv://yashdudhe414_db_user:2alf55MAfX4zykrr@eventmitra.yb8bnze.mongodb.net/EventMitra";
-const SECRET_KEY = "EVENTMITRA_SECRET";
+const PORT = ${{ secrets.PORT }}
+const MONGO_URI = ${{ secrets.MONGO_URI }}
+const SECRET_KEY = ${{ secrets.EVENTMITRASECRET }}
 
 /* ================= for Database connection ================= */
 mongoose.connect(MONGO_URI)
