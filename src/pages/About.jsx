@@ -13,26 +13,23 @@ import {
 
 const team = [
   {
-    name: "Shubham Rahangdale",
-    role: "Team Leader",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300",
+    name: "Shubham D. Rahangdale",
+    image: "https://github.com/Shubhamrahangdale/images/blob/main/Shubham.jpg?raw=true",
   },
   {
-    name: "Rishi Singh",
-    role: "Full Stack Developer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300",
+    name: "Rishi R. Singh",
+    image: "https://github.com/Shubhamrahangdale/images/blob/main/Rishi.jpg?raw=true",
   },
   {
     name: "Yash S. Dudhe",
-    role: "Frontend Developer",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300",
+    image: "https://github.com/Shubhamrahangdale/images/blob/main/YashDudhe.jpg?raw=true",
   },
   {
-    name: "Yash Virendra Sonkuwar",
-    role: "Backend Developer",
-    image: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300",
+    name: "Yash V. Sonkuwar",
+    image: "https://github.com/Shubhamrahangdale/images/blob/main/yashSonkuwar.jpg?raw=true",
   },
 ];
+
 
 const values = [
   {
