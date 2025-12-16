@@ -3,14 +3,16 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cors from "cors";
+import dotenv from "dotenv";
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+dotenv.config(); 
 
-const PORT = ${{ secrets.PORT }}
-const MONGO_URI = ${{ secrets.MONGO_URI }}
-const SECRET_KEY = ${{ secrets.EVENTMITRASECRET }}
+const PORT = process.env.PORT;
+const MONGO_URI = process.env.MONGO_URI;
+const SECRET_KEY = process.env.SECRET_KEY;
 
 /* ================= for Database connection ================= */
 mongoose.connect(MONGO_URI)
