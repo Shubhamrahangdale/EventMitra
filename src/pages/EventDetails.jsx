@@ -293,8 +293,8 @@ const EventDetails = () => {
 
   const handleBookTickets = () => {
     toast({
-      title: "Demo Mode",
-      description: `Booking ${ticketCount} ticket(s) for ${event.title}. Backend not connected.`,
+      title: "Error",
+      description: `Booking ${ticketCount} ticket(s) for ${event.title}`,
     });
   };
 

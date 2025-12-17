@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+
 
 const Login = () => {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,17 +49,24 @@ const handleSubmit = async (e) => {
     }
 
  
-    localStorage.setItem("token", result.token);
+    // Save token
+localStorage.setItem("token", result.token);
 
-    
-    localStorage.setItem("role", result.user.role);
+// Update Auth Context (VERY IMPORTANT)
+login({
+  name: result.user.name,
+  email: result.user.email,
+  role: result.user.role,
+  phone: result.user.phone || ""
+});
 
-    
-    if (result.user.role === "attendee") {
-      window.location.href = "/Profile";
-    } else if (result.user.role === "organizer") {
-      window.location.href = "/OrganizerDashboard";
-    }
+// Redirect
+if (result.user.role === "attendee") {
+  window.location.href = "/profile";
+} else if (result.user.role === "organizer") {
+  window.location.href = "/organizer";
+}
+
 
   } catch (error) {
     toast({
