@@ -13,7 +13,8 @@ import NotFound from "./pages/NotFound";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 import Profile from "./pages/Profile";
-
+import BookingForm from "./pages/BookingForm";
+import BookingConfirmation from "./pages/BookingConfirmation"
 const App = () => (
    <AuthProvider>
   <TooltipProvider>
@@ -31,6 +32,8 @@ const App = () => (
         <Route path="/organizer" element={<OrganizerDashboard />} />
         <Route path="*" element={<NotFound />} />
         <Route path="/profile" element={<Profile />} />
+         <Route path="/events/:id/book" element={<BookingForm />} />
+          <Route path="/booking/confirmation" element={<BookingConfirmation />} />
       </Routes>
     </BrowserRouter>
   </TooltipProvider>

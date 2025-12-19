@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link , useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,11 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -25,6 +30,7 @@ const handleSubmit = async (e) => {
       variant: "destructive",
     });
     return;
+    
   }
 
   setIsLoading(true);
@@ -64,6 +70,10 @@ login({
   phone: result.user.phone || ""
 });
 
+const from = location.state?.from || "/";
+
+navigate(from, { replace: true });
+
 // Redirect
 if (result.user.role === "attendee") {
   window.location.href = "/profile";
@@ -82,6 +92,7 @@ if (result.user.role === "attendee") {
   }
 
   setIsLoading(false);
+  
 };
 
   return (
