@@ -93,33 +93,67 @@ if (!event) {
     setAttendees(updated);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validate all attendee details
-    for (let i = 0; i < attendees.length; i++) {
-      const attendee = attendees[i];
-      if (!attendee.name || !attendee.age || !attendee.phone || !attendee.gender) {
-        toast({
-          title: "Missing Information",
-          description: `Please fill all details for Attendee ${i + 1}`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Navigate to confirmation page with booking data
-    navigate("/booking/confirmation", {
-      state: {
-        event,
+  // Validate attendees
+  for (let i = 0; i < attendees.length; i++) {
+    const attendee = attendees[i];
+    if (!attendee.name || !attendee.age || !attendee.phone || !attendee.gender) {
+      toast({
+        title: "Missing Information",
+        description: `Please fill all details for Attendee ${i + 1}`,
+        variant: "destructive",
+      });
+      return;
+    }
+  }
+
+  try {
+    const res = await fetch("http://localhost:2511/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        eventId: event._id,
         attendees,
         ticketCount,
         totalAmount: (event.price || 0) * ticketCount,
-        bookingId: `BK${Date.now()}`,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      toast({
+        title: "Error",
+        description: data.message || "Booking failed",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ Navigate only after DB success
+    navigate("/booking/confirmation", {
+      state: {
+        bookingId: data.bookingId,
+        event,
+        attendees,
+        ticketCount,
+        totalAmount: data.totalAmount,
       },
     });
-  };
+  } catch (error) {
+    toast({
+      title: "Server Error",
+      description: "Unable to complete booking",
+      variant: "destructive",
+    });
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-background">

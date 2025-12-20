@@ -2,12 +2,17 @@ import { useLocation, Link, Navigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { 
-  CheckCircle2, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { QRCodeCanvas } from "qrcode.react";
+
+
+import {
+  CheckCircle2,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
   Phone,
   Download,
   Home
@@ -24,10 +29,34 @@ const BookingConfirmation = () => {
 
   const { event, attendees, ticketCount, totalAmount, bookingId } = bookingData;
 
+  // Download the tickets
+  const downloadTickets = async () => {
+    for (let i = 0; i < attendees.length; i++) {
+      const attendee = attendees[i];
+
+      const ticketElement = document.getElementById(`ticket-${i}`);
+      const canvas = await html2canvas(ticketElement, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      pdf.addImage(imgData, "PNG", 10, 10, 190, 250);
+
+      // Watermark
+      pdf.setTextColor(200);
+      pdf.setFontSize(30);
+      pdf.text("EventMitra Official Ticket", 20, 160, {
+        angle: 45,
+      });
+
+      pdf.save(`${attendee.name}-Ticket.pdf`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto px-4 py-8 pt-24">
         <div className="max-w-2xl mx-auto">
           {/* Success Header */}
@@ -48,7 +77,9 @@ const BookingConfirmation = () => {
             {/* Booking ID */}
             <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
               <span className="text-sm text-muted-foreground">Booking ID</span>
-              <span className="font-mono font-semibold text-foreground">{bookingId}</span>
+              <span className="font-mono font-semibold text-foreground">
+                {bookingId}
+              </span>
             </div>
 
             {/* Event Info */}
@@ -59,7 +90,9 @@ const BookingConfirmation = () => {
                 className="w-24 h-24 object-cover rounded-lg"
               />
               <div className="flex-1">
-                <h2 className="font-semibold text-foreground mb-2">{event.title}</h2>
+                <h2 className="font-semibold text-foreground mb-2">
+                  {event.title}
+                </h2>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -79,38 +112,88 @@ const BookingConfirmation = () => {
 
             {/* Attendee Details */}
             <div className="mb-4">
-              <h3 className="font-semibold text-foreground mb-3">Attendee Details</h3>
+              <h3 className="font-semibold text-foreground mb-3">
+                Attendee Details
+              </h3>
               <div className="space-y-3">
                 {attendees.map((attendee, index) => (
+
                   <div
                     key={index}
-                    className="p-3 bg-muted/30 rounded-lg border border-border"
+                    id={`ticket-${index}`}
+                    className="bg-white text-black rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm"
+                    style={{ width: "100%" }}
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <User className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-foreground">
-                        {attendee.name}
-                      </span>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                        Ticket {index + 1}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
-                      <span>Age: {attendee.age}</span>
-                      <span className="capitalize">Gender: {attendee.gender}</span>
-                      <div className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        <span>{attendee.phone}</span>
+                    {/* TOP ROW */}
+                    <div className="flex justify-between items-start">
+                      {/* LEFT */}
+                      <div className="flex gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-orange-600" />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-semibold text-lg">{attendee.name}</h2>
+                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded">
+                              Ticket {index + 1}
+                            </span>
+                          </div>
+
+                          <p className="text-sm text-gray-600 mt-1">
+                            Age: {attendee.age}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* QR CODE */}
+                      <div className="bg-white p-2 border rounded-lg">
+                        <QRCodeCanvas
+                          value={`${bookingId}-${attendee.name}`}
+                          size={90}
+                        />
+
                       </div>
                     </div>
+
+                    {/* DETAILS ROW */}
+                    <div className="grid grid-cols-3 gap-4 text-sm text-gray-700 mt-4">
+                      <div>
+                        <p className="font-medium">Gender</p>
+                        <p className="capitalize">{attendee.gender}</p>
+                      </div>
+
+                      <div>
+                        <p className="font-medium">Phone</p>
+                        <p>{attendee.phone}</p>
+                      </div>
+
+                      <div>
+                        <p className="font-medium">Event</p>
+                        <p className="truncate">{event.title}</p>
+                      </div>
+                    </div>
+
+                    {/* WATERMARK (VISIBLE IN PDF) */}
+                    {/* <div className="relative mt-6">
+                      <p
+                        className="absolute inset-0 flex items-center justify-center text-gray-300 text-xl font-semibold rotate-[-35deg]"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        EventMitra Official Ticket
+                      </p>
+                    </div> */}
                   </div>
+
                 ))}
               </div>
             </div>
 
             {/* Payment Summary */}
             <div className="pt-4 border-t border-border">
-              <h3 className="font-semibold text-foreground mb-3">Payment Summary</h3>
+              <h3 className="font-semibold text-foreground mb-3">
+                Payment Summary
+              </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Price per ticket</span>
@@ -135,7 +218,7 @@ const BookingConfirmation = () => {
           {/* Info Note */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              A confirmation email with your tickets has been sent to your registered email address. 
+              A confirmation email with your tickets has been sent to your registered email address.
               Please carry a valid ID proof matching the attendee names when attending the event.
             </p>
           </div>
@@ -148,7 +231,8 @@ const BookingConfirmation = () => {
                 Back to Home
               </Link>
             </Button>
-            <Button className="flex-1">
+
+            <Button className="flex-1" onClick={downloadTickets}>
               <Download className="h-4 w-4 mr-2" />
               Download Tickets
             </Button>

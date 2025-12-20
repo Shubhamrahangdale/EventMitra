@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
 import eventRoutes from "./routes/eventRoutes.js";
+import bookingRoutes from "./routes/BookingRoutes.js";
 
 
 const app = express();
@@ -165,6 +166,13 @@ app.post("/login", async (req, res) => {
 /* ================= EVENT ROUTES ================= */
 
 app.use("/api/events", eventRoutes);
+
+
+/* ================= Booking ROUTES ================= */
+
+
+app.use("/api/bookings", bookingRoutes);
+
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () =>
