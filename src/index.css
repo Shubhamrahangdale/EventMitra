@@ -22,8 +22,8 @@
 
     /* Deep Navy - Secondary color */
     --secondary: 220 60% 20%;
-    --secondary-foreground: 0 0% 100%;
-
+    --secondary-foreground: 0 0% 100%; 
+   
     /* Muted warm tones */
     --muted: 40 20% 94%;
     --muted-foreground: 220 15% 45%;
@@ -64,6 +64,14 @@
     --sidebar-border: 220 50% 25%;
     --sidebar-ring: 18 100% 60%;
   }
+
+  /* For ticket  */
+@layer components {
+  .ticket-bg {
+    background-color: hsl(220 18.82% 91.08% / 0.47);
+  }
+}
+
 
   .dark {
     --background: 220 50% 8%;

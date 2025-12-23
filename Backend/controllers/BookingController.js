@@ -64,10 +64,15 @@ export const getBookingPDF = async (req, res) => {
     }
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename=${booking.bookingId}.pdf`
-    );
+res.setHeader(
+  "Content-Disposition",
+  `attachment; filename="${booking.bookingId}.pdf"`
+);
+
+res.send(pdfBuffer);
+
+
+  
 
     const doc = new PDFDocument();
     doc.pipe(res);

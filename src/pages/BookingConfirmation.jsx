@@ -1,10 +1,13 @@
 import { useLocation, Link, Navigate } from "react-router-dom";
+import { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { QRCodeCanvas } from "qrcode.react";
+import { TicketCard } from "@/pages/TicketCard";
+
 
 
 import {
@@ -22,36 +25,57 @@ const BookingConfirmation = () => {
   const location = useLocation();
   const bookingData = location.state;
 
+
   // Redirect if no booking data
   if (!bookingData) {
     return <Navigate to="/events" replace />;
   }
 
-  const { event, attendees, ticketCount, totalAmount, bookingId } = bookingData;
+ const { event, attendees, ticketCount, totalAmount, bookingId } = bookingData;
+ const [showTicket, setShowTicket] = useState(false);
+
 
   // Download the tickets
-  const downloadTickets = async () => {
-    for (let i = 0; i < attendees.length; i++) {
-      const attendee = attendees[i];
+const downloadTickets = async () => {
+  const ticketElement = document.getElementById("ticket-card-pdf");
+  if (!ticketElement) return;
 
-      const ticketElement = document.getElementById(`ticket-${i}`);
-      const canvas = await html2canvas(ticketElement, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
+  const canvas = await html2canvas(ticketElement, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
 
-      const pdf = new jsPDF("p", "mm", "a4");
+  const pdf = new jsPDF("p", "mm", "a4");
+  pdf.addImage(imgData, "PNG", 10, 10, 190, 260);
 
-      pdf.addImage(imgData, "PNG", 10, 10, 190, 250);
+  pdf.setTextColor(200);
+  pdf.setFontSize(30);
+  pdf.save(`${bookingId}.pdf`);
+};
 
-      // Watermark
-      pdf.setTextColor(200);
-      pdf.setFontSize(30);
-      pdf.text("EventMitra Official Ticket", 20, 160, {
-        angle: 45,
-      });
+  
 
-      pdf.save(`${attendee.name}-Ticket.pdf`);
-    }
-  };
+  const ticketCardData = {
+  bookingId,
+  event: {
+    name: event.title,
+    date: event.date,
+    time: event.time,
+    venue: `${event.location}, ${event.city}`,
+    imageUrl: event.image,
+  },
+  attendees: attendees.map((a, i) => ({
+    name: a.name,
+    age: a.age,
+    gender: a.gender,
+    phone: a.phone,
+    ticketNumber: i + 1,
+  })),
+  payment: {
+    pricePerTicket: event.price,
+    numberOfTickets: ticketCount,
+    totalPaid: totalAmount,
+  },
+};
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,6 +105,18 @@ const BookingConfirmation = () => {
                 {bookingId}
               </span>
             </div>
+           {/* {showTicket && (
+  <div id="ticket-card-pdf" className="mt-6">
+    <TicketCard
+      bookingId={ticketCardData.bookingId}
+      event={ticketCardData.event}
+      attendees={ticketCardData.attendees}
+      payment={ticketCardData.payment}
+    />
+  </div>
+)} */}
+
+
 
             {/* Event Info */}
             <div className="flex gap-4 pb-4 border-b border-border mb-4">
@@ -111,83 +147,7 @@ const BookingConfirmation = () => {
             </div>
 
             {/* Attendee Details */}
-            <div className="mb-4">
-              <h3 className="font-semibold text-foreground mb-3">
-                Attendee Details
-              </h3>
-              <div className="space-y-3">
-                {attendees.map((attendee, index) => (
-
-                  <div
-                    key={index}
-                    id={`ticket-${index}`}
-                    className="bg-white text-black rounded-2xl border border-gray-200 p-6 mb-6 shadow-sm"
-                    style={{ width: "100%" }}
-                  >
-                    {/* TOP ROW */}
-                    <div className="flex justify-between items-start">
-                      {/* LEFT */}
-                      <div className="flex gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-orange-600" />
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h2 className="font-semibold text-lg">{attendee.name}</h2>
-                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded">
-                              Ticket {index + 1}
-                            </span>
-                          </div>
-
-                          <p className="text-sm text-gray-600 mt-1">
-                            Age: {attendee.age}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* QR CODE */}
-                      <div className="bg-white p-2 border rounded-lg">
-                        <QRCodeCanvas
-                          value={`${bookingId}-${attendee.name}`}
-                          size={90}
-                        />
-
-                      </div>
-                    </div>
-
-                    {/* DETAILS ROW */}
-                    <div className="grid grid-cols-3 gap-4 text-sm text-gray-700 mt-4">
-                      <div>
-                        <p className="font-medium">Gender</p>
-                        <p className="capitalize">{attendee.gender}</p>
-                      </div>
-
-                      <div>
-                        <p className="font-medium">Phone</p>
-                        <p>{attendee.phone}</p>
-                      </div>
-
-                      <div>
-                        <p className="font-medium">Event</p>
-                        <p className="truncate">{event.title}</p>
-                      </div>
-                    </div>
-
-                    {/* WATERMARK (VISIBLE IN PDF) */}
-                    {/* <div className="relative mt-6">
-                      <p
-                        className="absolute inset-0 flex items-center justify-center text-gray-300 text-xl font-semibold rotate-[-35deg]"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        EventMitra Official Ticket
-                      </p>
-                    </div> */}
-                  </div>
-
-                ))}
-              </div>
-            </div>
+           
 
             {/* Payment Summary */}
             <div className="pt-4 border-t border-border">
@@ -231,14 +191,48 @@ const BookingConfirmation = () => {
                 Back to Home
               </Link>
             </Button>
+<Button className="flex-1" onClick={downloadTickets}>
+  <Download className="h-4 w-4 mr-2" />
+  Download Tickets
+</Button>
 
-            <Button className="flex-1" onClick={downloadTickets}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Tickets
-            </Button>
+           
           </div>
         </div>
       </main>
+      {/* Hidden TicketCard for PDF generation only */}
+<div
+  id="ticket-card-pdf"
+  style={{
+    position: "absolute",
+    left: "-9999px",
+    top: 0,
+  }}
+>
+  <TicketCard
+    bookingId={bookingId}
+    event={{
+      name: event.title,
+      date: event.date,
+      time: event.time,
+      venue: `${event.location}, ${event.city}`,
+      imageUrl: event.image,
+    }}
+    attendees={attendees.map((a, i) => ({
+      name: a.name,
+      age: a.age,
+      gender: a.gender,
+      phone: a.phone,
+      ticketNumber: i + 1,
+    }))}
+    payment={{
+      pricePerTicket: event.price,
+      numberOfTickets: ticketCount,
+      totalPaid: totalAmount,
+    }}
+  />
+</div>
+
 
       <Footer />
     </div>

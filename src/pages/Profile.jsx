@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { TicketCard } from "@/pages/TicketCard";
 import { toast } from "@/hooks/use-toast";
 import {
   User,
@@ -28,13 +29,83 @@ import {
   Camera,
 } from "lucide-react";
 
+// const Profile = () => {
+//   const { user, updateProfile, logout } = useAuth();
+//   const navigate = useNavigate();
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [selectedTicket, setSelectedTicket] = useState(null);
+
+//   const [bookedTickets, setBookedTickets] = useState([]);
+//   const token = localStorage.getItem("token");
+//   // const [tickets, setTickets] = useState([]);
+
+//   const [formData, setFormData] = useState({
+//     name: user?.name || "",
+//     email: user?.email || "",
+//     phone: user?.phone || "",
+//     bio: user?.bio || "",
+//     location: user?.location || "",
+//   });
+
+//   // Redirect if not logged in
+//   if (!user) {
+//     return (
+//       <div className="min-h-screen flex flex-col">
+//         <Navbar />
+//         <main className="flex-1 flex items-center justify-center">
+//           <div className="text-center">
+//             <h2 className="text-2xl font-bold mb-4">Please Login</h2>
+//             <p className="text-muted-foreground mb-6">You need to login to view your profile</p>
+//             <Button asChild>
+//               <Link to="/login">Go to Login</Link>
+//             </Button>
+//           </div>
+//         </main>
+//         <Footer />
+//       </div>
+//     );
+//   }
+// useEffect(() => {
+//   const fetchTickets = async () => {
+//     const token = localStorage.getItem("token");
+
+//     if (!token) {
+//       console.error("Token not found in localStorage");
+//       return;
+//     }
+
+//     const res = await fetch("http://localhost:2511/api/bookings/my", {
+//       method: "GET",
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
+
+//     if (!res.ok) {
+//       const err = await res.json();
+//       console.error("Fetch tickets error:", err.message);
+//       return;
+//     }
+
+//     const data = await res.json();
+//     setBookedTickets(data);
+//   };
+
+//   fetchTickets();
+// }, []);
+
+
+
 const Profile = () => {
   const { user, updateProfile, logout } = useAuth();
   const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [bookedTickets, setBookedTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+
   const token = localStorage.getItem("token");
-  // const [tickets, setTickets] = useState([]);
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -44,15 +115,31 @@ const Profile = () => {
     location: user?.location || "",
   });
 
-  // Redirect if not logged in
-  if (!user) {
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchTickets = async () => {
+      const res = await fetch("http://localhost:2511/api/bookings/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      setBookedTickets(data);
+    };
+
+    fetchTickets();
+  }, [user]);
+
+
+    if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Please Login</h2>
-            <p className="text-muted-foreground mb-6">You need to login to view your profile</p>
             <Button asChild>
               <Link to="/login">Go to Login</Link>
             </Button>
@@ -62,35 +149,6 @@ const Profile = () => {
       </div>
     );
   }
-useEffect(() => {
-  const fetchTickets = async () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("Token not found in localStorage");
-      return;
-    }
-
-    const res = await fetch("http://localhost:2511/api/bookings/my", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      console.error("Fetch tickets error:", err.message);
-      return;
-    }
-
-    const data = await res.json();
-    setBookedTickets(data);
-  };
-
-  fetchTickets();
-}, []);
 
   
 
@@ -375,20 +433,12 @@ useEffect(() => {
                               {ticket.status}
                             </Badge>
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                window.open(
-  `http://localhost:2511/api/bookings/${ticket.bookingId}/pdf?token=${token}`,
-  "_blank"
-)
-                                
-                              }
-                            >
-                              View Ticket
-                            </Button>
-
-
+  variant="outline"
+  size="sm"
+  onClick={() => setSelectedTicket(ticket)}
+>
+  View Ticket
+</Button>
 
                           </div>
                         </div>
@@ -460,6 +510,47 @@ useEffect(() => {
           </Tabs>
         </div>
       </main>
+
+      {/* ticket priew  */}
+      {selectedTicket && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-background p-6 rounded-lg max-w-2xl w-full relative">
+
+      {/* Close Button */}
+      <button
+        onClick={() => setSelectedTicket(null)}
+        className="absolute top-3 right-3 text-xl font-bold"
+      >
+        ✕
+      </button>
+
+      <TicketCard
+        bookingId={selectedTicket.bookingId}
+        event={{
+          name: selectedTicket.eventTitle,
+          date: selectedTicket.eventId?.date,
+          time: selectedTicket.eventId?.time,
+          venue: selectedTicket.eventId?.location,
+          imageUrl: selectedTicket.eventId?.image,
+        }}
+        attendees={selectedTicket.attendees.map((a, i) => ({
+          name: a.name,
+          age: a.age,
+          gender: a.gender,
+          phone: a.phone,
+          ticketNumber: i + 1,
+        }))}
+        payment={{
+          pricePerTicket: selectedTicket.pricePerTicket,
+          numberOfTickets: selectedTicket.ticketCount,
+          totalPaid: selectedTicket.totalAmount,
+        }}
+      />
+
+    </div>
+  </div>
+)}
+
 
       <Footer />
     </div>
