@@ -1,14 +1,15 @@
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { 
-  Search, 
-  Calendar, 
-  MapPin, 
-  Users, 
+import { useSearchParams } from "react-router-dom";
+import {
+  Search,
+  Calendar,
+  MapPin,
+  Users,
   Filter,
   ArrowRight,
   Heart,
@@ -30,47 +31,59 @@ const Events = () => {
   const [selectedPrice, setSelectedPrice] = useState("Any Price");
   const [showFilters, setShowFilters] = useState(false);
   const [likedEvents, setLikedEvents] = useState([]);
+  const [searchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category");
+
+useEffect(() => {
+  if (selectedCategory) {
+    setActiveCategory(selectedCategory);
+  } else {
+    setActiveCategory("All");
+  }
+}, [selectedCategory]);
 
 
   useEffect(() => {
-  const fetchEvents = async () => {
-    try {
-      const res = await fetch("http://localhost:2511/api/events");
-      const data = await res.json();
-      setEvents(data);
-    } catch (error) {
-      console.error("Failed to fetch events", error);
-    }
-  };
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("http://localhost:2511/api/events");
+        const data = await res.json();
+        setEvents(data);
+      } catch (error) {
+        console.error("Failed to fetch events", error);
+      }
+    };
 
-  fetchEvents();
-}, []);
+    fetchEvents();
+  }, []);
 
-const filteredEvents = events.filter((event) => {
-  const title = event.title ?? "";
-  const description = event.description ?? "";
+  const filteredEvents = events.filter((event) => {
+    const title = event.title ?? "";
+    const description = event.description ?? "";
 
-  const matchesSearch =
-    title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      description.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const matchesCategory =
-    activeCategory === "All" || event.category === activeCategory;
+    const matchesCategory =
+  activeCategory === "All" ||
+  event.category?.toLowerCase() === activeCategory.toLowerCase();
 
-  const matchesCity =
-    selectedCity === "All Cities" || event.city === selectedCity;
 
-  let matchesPrice = true;
-  const price = event.price ?? 0;
+    const matchesCity =
+      selectedCity === "All Cities" || event.city === selectedCity;
 
-  if (selectedPrice === "Free") matchesPrice = price === 0;
-  else if (selectedPrice === "Under ₹1000") matchesPrice = price < 1000;
-  else if (selectedPrice === "₹1000 - ₹5000")
-    matchesPrice = price >= 1000 && price <= 5000;
-  else if (selectedPrice === "Above ₹5000") matchesPrice = price > 5000;
+    let matchesPrice = true;
+    const price = event.price ?? 0;
 
-  return matchesSearch && matchesCategory && matchesCity && matchesPrice;
-});
+    if (selectedPrice === "Free") matchesPrice = price === 0;
+    else if (selectedPrice === "Under ₹1000") matchesPrice = price < 1000;
+    else if (selectedPrice === "₹1000 - ₹5000")
+      matchesPrice = price >= 1000 && price <= 5000;
+    else if (selectedPrice === "Above ₹5000") matchesPrice = price > 5000;
+
+    return matchesSearch && matchesCategory && matchesCity && matchesPrice;
+  });
 
   const toggleLike = (id) => {
     setLikedEvents((prev) =>
@@ -81,7 +94,7 @@ const filteredEvents = events.filter((event) => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-20">
         {/* Header */}
         <div className="bg-secondary/5 py-12 md:py-16">
@@ -248,7 +261,7 @@ const filteredEvents = events.filter((event) => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Users className="w-4 h-4 text-primary" />
-                      {(event.soldTickets || 0).toLocaleString()} / {(event.totalTickets || 0).toLocaleString()} attending
+                        {(event.soldTickets || 0).toLocaleString()} / {(event.totalTickets || 0).toLocaleString()} attending
 
 
                       </div>

@@ -36,35 +36,52 @@ const Footer = () => {
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-3">
-              {["Home", "Browse Events", "Create Event", "Pricing", "FAQs"].map((item) => (
-                <li key={item}>
+              {[
+                { name: "Home", path: "/" },
+                { name: "Browse Events", path: "/Events" },
+                { name: "About", path: "/About" },
+                { name: "Contact Us", path: "/Contact" },
+                { name: "FAQs", path: "/faqs" },
+              ].map((item) => (
+                <li key={item.name}>
                   <Link
-                    to="#"
+                    to={item.path}
                     className="text-secondary-foreground/70 hover:text-primary transition-colors text-sm"
                   >
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
+
           {/* Event Types */}
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Event Types</h4>
             <ul className="space-y-3">
-              {["Weddings", "Corporate Events", "Concerts & Shows", "Festivals", "Workshops"].map((item) => (
-                <li key={item}>
+              {[
+                "Cultural",
+                "Music",
+                "Business",
+                "Sports",
+                "Food",
+                "Arts",
+                "Technology",
+                "Education",
+              ].map((category) => (
+                <li key={category}>
                   <Link
-                    to="#"
+                    to={`/events?category=${category}`}
                     className="text-secondary-foreground/70 hover:text-primary transition-colors text-sm"
                   >
-                    {item}
+                    {category}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
+
 
           {/* Contact */}
           <div>

@@ -23,7 +23,7 @@ const Navbar = () => {
     { name: "Events", href: "/events" },
     // { name: "Organizer", href: "/organizer" },
     { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
+    { name: "Contact Us", href: "/contact" },
   ];
 
   const isActive = (href) => location.pathname === href;

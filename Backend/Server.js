@@ -6,6 +6,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import eventRoutes from "./routes/eventRoutes.js";
 import bookingRoutes from "./routes/BookingRoutes.js";
+import contactRoutes from "./routes/ContactRoutes.js";
 
 
 const app = express();
@@ -172,6 +173,10 @@ app.use("/api/events", eventRoutes);
 
 
 app.use("/api/bookings", bookingRoutes);
+
+/* ================= Contact us ROUTES ================= */
+
+app.use("/api/contact", contactRoutes);
 
 
 /* ================= START SERVER ================= */

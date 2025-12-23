@@ -28,20 +28,54 @@ const Contact = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+   const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  try {
+    const response = await fetch("http://localhost:2511/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      toast({
+        title: "Error ❌",
+        description: data.message || "Something went wrong",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     toast({
-      title: "Message Sent!",
+      title: "Message Sent 📩",
       description: "We'll get back to you within 24 hours.",
     });
-    
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setIsLoading(false);
-  };
+
+    setFormData({
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    });
+  } catch (error) {
+    toast({
+      title: "Server Error ❌",
+      description: "Unable to connect to server",
+      variant: "destructive",
+    });
+    console.error(error);
+  }
+
+  setIsLoading(false);
+};
+
 
   const contactInfo = [
     {

@@ -6,16 +6,12 @@ import { cn } from "@/lib/utils";
 
 const categories = [
   "All",
-  "Conference",
-  "Festival",
-  "Workshop",
-  "Concert",
-  "Networking",
   "Cultural",
+  "Music",
   "Business",
   "Sports",
   "Food",
-  "Art",
+  "Arts",
   "Technology",
   "Education",
 ];
@@ -46,7 +42,11 @@ const FeaturedEvents = () => {
   const filteredEvents =
     activeCategory === "All"
       ? events
-      : events.filter(event => event.category === activeCategory);
+      : events.filter(
+        event =>
+          event.category?.toLowerCase() === activeCategory.toLowerCase()
+      );
+
 
   // ✅ LIKE TOGGLE
   const toggleLike = (id) => {
