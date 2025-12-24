@@ -66,9 +66,6 @@ const Footer = () => {
                 "Business",
                 "Sports",
                 "Food",
-                "Arts",
-                "Technology",
-                "Education",
               ].map((category) => (
                 <li key={category}>
                   <Link

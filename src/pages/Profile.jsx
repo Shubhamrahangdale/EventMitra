@@ -512,14 +512,16 @@ const Profile = () => {
       </main>
 
       {/* ticket priew  */}
-      {selectedTicket && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-background p-6 rounded-lg max-w-2xl w-full relative">
+{selectedTicket && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    
+    {/* Scroll container */}
+    <div className="relative bg-background rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
 
-      {/* Close Button */}
+      {/* Sticky Close Button */}
       <button
         onClick={() => setSelectedTicket(null)}
-        className="absolute top-3 right-3 text-xl font-bold"
+        className="sticky top-0 ml-auto block text-xl font-bold z-50"
       >
         ✕
       </button>
@@ -546,10 +548,10 @@ const Profile = () => {
           totalPaid: selectedTicket.totalAmount,
         }}
       />
-
     </div>
   </div>
 )}
+
 
 
       <Footer />

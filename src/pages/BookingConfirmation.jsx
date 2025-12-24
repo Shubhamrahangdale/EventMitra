@@ -8,8 +8,6 @@ import html2canvas from "html2canvas";
 import { QRCodeCanvas } from "qrcode.react";
 import { TicketCard } from "@/pages/TicketCard";
 
-
-
 import {
   CheckCircle2,
   Calendar,
@@ -24,6 +22,8 @@ import {
 const BookingConfirmation = () => {
   const location = useLocation();
   const bookingData = location.state;
+  const [renderForPDF, setRenderForPDF] = useState(false);
+
 
 
   // Redirect if no booking data
@@ -34,25 +34,49 @@ const BookingConfirmation = () => {
  const { event, attendees, ticketCount, totalAmount, bookingId } = bookingData;
  const [showTicket, setShowTicket] = useState(false);
 
+//for split into page 
+const chunkArray = (arr, size) => {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+};
 
   // Download the tickets
 const downloadTickets = async () => {
-  const ticketElement = document.getElementById("ticket-card-pdf");
-  if (!ticketElement) return;
-
-  const canvas = await html2canvas(ticketElement, { scale: 2 });
-  const imgData = canvas.toDataURL("image/png");
-
   const pdf = new jsPDF("p", "mm", "a4");
-  pdf.addImage(imgData, "PNG", 10, 10, 190, 260);
 
-  pdf.setTextColor(200);
-  pdf.setFontSize(30);
-  pdf.save(`${bookingId}.pdf`);
+  const pages = chunkArray(attendees, 5); // 👈 5 tickets per page
+
+  setRenderForPDF(true);
+
+  setTimeout(async () => {
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+      const element = document.getElementById(`ticket-page-${pageIndex}`);
+      if (!element) continue;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (pageIndex !== 0) pdf.addPage();
+
+      pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+    }
+
+    pdf.save(`${bookingId}.pdf`);
+    setRenderForPDF(false);
+  }, 400);
 };
 
-  
-
+// Ticket Card Data 
   const ticketCardData = {
   bookingId,
   event: {
@@ -105,18 +129,6 @@ const downloadTickets = async () => {
                 {bookingId}
               </span>
             </div>
-           {/* {showTicket && (
-  <div id="ticket-card-pdf" className="mt-6">
-    <TicketCard
-      bookingId={ticketCardData.bookingId}
-      event={ticketCardData.event}
-      attendees={ticketCardData.attendees}
-      payment={ticketCardData.payment}
-    />
-  </div>
-)} */}
-
-
 
             {/* Event Info */}
             <div className="flex gap-4 pb-4 border-b border-border mb-4">
@@ -201,38 +213,42 @@ const downloadTickets = async () => {
         </div>
       </main>
       {/* Hidden TicketCard for PDF generation only */}
-<div
-  id="ticket-card-pdf"
-  style={{
-    position: "absolute",
-    left: "-9999px",
-    top: 0,
-  }}
->
-  <TicketCard
-    bookingId={bookingId}
-    event={{
-      name: event.title,
-      date: event.date,
-      time: event.time,
-      venue: `${event.location}, ${event.city}`,
-      imageUrl: event.image,
-    }}
-    attendees={attendees.map((a, i) => ({
-      name: a.name,
-      age: a.age,
-      gender: a.gender,
-      phone: a.phone,
-      ticketNumber: i + 1,
-    }))}
-    payment={{
-      pricePerTicket: event.price,
-      numberOfTickets: ticketCount,
-      totalPaid: totalAmount,
-    }}
-  />
-</div>
-
+{renderForPDF &&
+  chunkArray(attendees, 5).map((pageAttendees, index) => (
+    <div
+      key={index}
+      id={`ticket-page-${index}`}
+      style={{
+        position: "absolute",
+        left: "-9999px",
+        top: 0,
+        width: "800px",
+      }}
+    >
+      <TicketCard
+        bookingId={bookingId}
+        event={{
+          name: event.title,
+          date: event.date,
+          time: event.time,
+          venue: `${event.location}, ${event.city}`,
+          imageUrl: event.image,
+        }}
+        attendees={pageAttendees.map((a, i) => ({
+          name: a.name,
+          age: a.age,
+          gender: a.gender,
+          phone: a.phone,
+          ticketNumber: index * 5 + i + 1, 
+        }))}
+        payment={{
+          pricePerTicket: event.price,
+          numberOfTickets: ticketCount,
+          totalPaid: totalAmount,
+        }}
+      />
+    </div>
+  ))}
 
       <Footer />
     </div>

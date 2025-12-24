@@ -11,9 +11,6 @@ const categories = [
   "Business",
   "Sports",
   "Food",
-  "Arts",
-  "Technology",
-  "Education",
 ];
 
 const FeaturedEvents = () => {

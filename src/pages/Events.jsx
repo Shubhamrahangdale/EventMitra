@@ -19,7 +19,15 @@ import { cn } from "@/lib/utils";
 
 
 
-const categories = ["All", "Conference", "Festival", "Workshop", "Concert", "Networking", "Exhibition"];
+const categories = ["All",
+  "Cultural",
+  "Music",
+  "Business",
+  "Sports",
+  "Food",
+  "Arts",
+  "Technology",
+  "Education"];
 const cities = ["All Cities", "Bangalore", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Kolkata"];
 const priceRanges = ["Any Price", "Free", "Under ₹1000", "₹1000 - ₹5000", "Above ₹5000"];
 
