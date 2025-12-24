@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toggleTheme } from "@/components/ui/theme";
+import { Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +14,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu, X, Calendar, User, LogIn, LogOut, Ticket, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+const ThemeToggle = () => {
+  const [dark, setDark] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  const handleToggle = () => {
+    toggleTheme();
+    setDark(!dark);
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="p-2 rounded-md border hover:bg-muted transition"
+      aria-label="Toggle dark mode"
+    >
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
+  );
+};
+
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +65,9 @@ const Navbar = () => {
     setIsOpen(false);
   };
 
+  
+
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto px-4">
@@ -58,6 +84,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
+            <ThemeToggle />  
             {navLinks.map((link) => (
               <Link
                 key={link.name}

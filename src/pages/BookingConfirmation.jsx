@@ -44,19 +44,60 @@ const chunkArray = (arr, size) => {
 };
 
   // Download the tickets
-const downloadTickets = async () => {
-  const pdf = new jsPDF("p", "mm", "a4");
+// const downloadTickets = async () => {
+//   const pdf = new jsPDF("p", "mm", "a4");
 
-  const pages = chunkArray(attendees, 5); // 👈 5 tickets per page
+//   const pages = chunkArray(attendees, 5); // 👈 5 tickets per page
+
+//   setRenderForPDF(true);
+
+//   setTimeout(async () => {
+//     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+//       const element = document.getElementById(`ticket-page-${pageIndex}`);
+//       if (!element) continue;
+
+//       const canvas = await html2canvas(element, {
+//         scale: 2,
+//         useCORS: true,
+//         backgroundColor: "#ffffff",
+//       });
+
+//       const imgData = canvas.toDataURL("image/png");
+//       const imgWidth = 190;
+//       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+//       if (pageIndex !== 0) pdf.addPage();
+
+//       pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+//     }
+
+//     pdf.save(`${bookingId}.pdf`);
+//     setRenderForPDF(false);
+//   }, 400);
+// };
+const downloadTickets = async () => {
+  const html = document.documentElement;
+  const wasDark = html.classList.contains("dark");
+  html.classList.remove("dark"); // force light mode for PDF
+
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pages = chunkArray(attendees, 5); // 5 tickets per page
 
   setRenderForPDF(true);
 
+  // wait for hidden DOM to render
   setTimeout(async () => {
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-      const element = document.getElementById(`ticket-page-${pageIndex}`);
-      if (!element) continue;
+      const pageElement = document.getElementById(
+        `ticket-page-${pageIndex}`
+      );
 
-      const canvas = await html2canvas(element, {
+      if (!pageElement) {
+        console.error("Missing page:", pageIndex);
+        continue;
+      }
+
+      const canvas = await html2canvas(pageElement, {
         scale: 2,
         useCORS: true,
         backgroundColor: "#ffffff",
@@ -67,14 +108,17 @@ const downloadTickets = async () => {
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       if (pageIndex !== 0) pdf.addPage();
-
       pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
     }
 
     pdf.save(`${bookingId}.pdf`);
+
     setRenderForPDF(false);
+    if (wasDark) html.classList.add("dark");
   }, 400);
 };
+
+
 
 // Ticket Card Data 
   const ticketCardData = {
