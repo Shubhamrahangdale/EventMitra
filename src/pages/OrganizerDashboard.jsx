@@ -201,6 +201,49 @@ const OrganizerDashboard = () => {
 
 //This stop creating new Event 
 
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+
+//   const token = localStorage.getItem("token");
+
+//   const url = editingEvent
+//     ? `http://localhost:2511/api/events/${editingEvent._id}`
+//     : "http://localhost:2511/api/events";
+
+//   const method = editingEvent ? "PUT" : "POST";
+
+//   const res = await fetch(url, {
+//     method,
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${token}`,
+//     },
+//     body: JSON.stringify(formData),
+//   });
+
+//   if (!res.ok){
+//      const text = await res.text(); 
+//     throw new Error(data.message);
+//   }
+//   const data = await res.json();
+
+  
+
+//   setEvents(prev =>
+//     editingEvent
+//       ? prev.map(e => (e._id === data._id ? data : e))
+//       : [data, ...prev]
+//   );
+
+//   toast({
+//     title: editingEvent ? "Event Updated" : "Event Created",
+//   });
+
+//   setShowCreateModal(false);
+//   resetForm();
+// };
+
+
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -212,36 +255,56 @@ const handleSubmit = async (e) => {
 
   const method = editingEvent ? "PUT" : "POST";
 
-  const res = await fetch(url, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(formData),
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    });
 
-  if (!res.ok){
-     const text = await res.text(); 
-    throw new Error(data.message);
+    const data = await res.json(); // { message, event } on create
+
+    if (!res.ok) {
+      // will show backend message like:
+      // "Only organisers can create events" or
+      // "Subscription required or event limit reached ❌"
+      throw new Error(data.message || "Event creation failed ❌");
+    }
+
+    const savedEvent = data.event || data; // support both shapes
+
+    setEvents((prev) =>
+      editingEvent
+        ? prev.map((e) => (e._id === savedEvent._id ? savedEvent : e))
+        : [savedEvent, ...prev]
+    );
+
+    toast({
+      title: editingEvent ? "Event Updated" : "Event Created",
+      description:
+        data.message || "Event submitted for admin approval ✅",
+    });
+
+    setShowCreateModal(false);
+    resetForm();
+  } catch (err) {
+    console.error(err);
+    toast({
+      title: "Error",
+      description: err.message || "Failed to save event",
+      variant: "destructive",
+    });
   }
-  const data = await res.json();
-
-  
-
-  setEvents(prev =>
-    editingEvent
-      ? prev.map(e => (e._id === data._id ? data : e))
-      : [data, ...prev]
-  );
-
-  toast({
-    title: editingEvent ? "Event Updated" : "Event Created",
-  });
-
-  setShowCreateModal(false);
-  resetForm();
 };
+
+
+
+
+
+
 
 
   const sidebarItems = [

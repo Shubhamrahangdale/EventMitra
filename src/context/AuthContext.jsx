@@ -29,10 +29,23 @@ export const AuthProvider = ({ children }) => {
     return userInfo;
   };
 
+  // const logout = () => {
+  //   setUser(null);
+  //   localStorage.removeItem("eventmitra_user");
+  // };
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("eventmitra_user");
-  };
+  setUser(null);
+  localStorage.removeItem("eventmitra_user");
+
+  // clear auth tokens if you use them elsewhere
+  localStorage.removeItem("token");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("adminToken");
+
+  // clear booked events so ✔ Booked + sorting reset
+  localStorage.removeItem("bookedEventIds");
+};
+
 
   const updateProfile = (updates) => {
     const updatedUser = { ...user, ...updates };

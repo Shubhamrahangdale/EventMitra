@@ -11,7 +11,8 @@ import {
   editEvent,
   eventToAdmin,
   eventToApprove,
-  eventToReject 
+  eventToReject,
+  getAllAdminEvents
 } from "../controllers/eventController.js";
 
 const router = express.Router();
@@ -33,6 +34,11 @@ router.put(
   "/admin/events/:id/reject",
   adminAuth,
   eventToReject
+);
+router.get(
+  "/admin/events/all",
+  adminAuth,    
+  getAllAdminEvents
 );
 
 

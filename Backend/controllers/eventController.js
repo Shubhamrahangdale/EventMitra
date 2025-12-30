@@ -1,18 +1,55 @@
 import Event from "../models/Event.js";
+import Organizer from "../models/Organizer.js";
 
-// Create an event 
+
 export const createEvent = async (req, res) => {
   try {
+    if (req.user.role !== "organizer") {
+      return res
+        .status(403)
+        .json({ message: "Only organisers can create events" });
+    }
+
+    const organiser = await Organizer.findById(req.user.id);
+
+    if (!organiser) {
+      return res.status(404).json({ message: "Organiser not found" });
+    }
+
+    if (!organiser.subscription) {
+      return res
+        .status(403)
+        .json({ message: "No subscription found for organiser ❌" });
+    }
+
+    if (
+      organiser.subscription.status !== "active" ||
+      organiser.subscription.eventsUsed >= organiser.subscription.eventsAllowed
+    ) {
+      return res.status(403).json({
+        message: "Subscription required or event limit reached ❌",
+      });
+    }
+
     const event = await Event.create({
       ...req.body,
-      organizerId: req.user.id, 
+      organizerId: organiser._id,
+      status: "pending",
     });
 
-    res.status(201).json(event);
+    organiser.subscription.eventsUsed += 1;
+    await organiser.save();
+
+    return res.status(201).json({
+      message: "Event submitted for admin approval ✅",
+      event,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating event", error });
+    console.error("CREATE EVENT ERROR:", error);
+    return res.status(500).json({ message: "Event creation failed ❌" });
   }
 };
+
 
 export const eventToAdmin = async (req, res) => {
   try {
@@ -59,6 +96,16 @@ export const eventToReject = async (req, res) => {
     res.json({ message: "Event rejected successfully" });
   } catch (err) {
     res.status(500).json({ message: "Event rejection failed" });
+  }
+};
+
+
+export const getAllAdminEvents = async (req, res) => {
+  try {
+    const events = await Event.find().populate("organizerId");
+    res.json(events);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch events" });
   }
 };
 
@@ -156,5 +203,4 @@ export const editEvent = async (req, res) => {
     res.status(500).json({ message: "Failed to update event" });
   }
 };
-
 

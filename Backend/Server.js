@@ -5,9 +5,12 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
+
+import Organizer from "./models/Organizer.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import bookingRoutes from "./routes/BookingRoutes.js";
 import contactRoutes from "./routes/ContactRoutes.js";
+import organizerRoutes from "./routes/OrganizerRoutes.js";
 import adminAuth from "./middleware/adminAuth.js";
 
 
@@ -42,33 +45,33 @@ const attendeeSchema = new mongoose.Schema({
 });
 
 
-const organizerSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  phone: String,
-  password: String,
-  status: {
-    type: String,
-    enum: ["pending", "active", "inactive"],
-    default: "pending"
-  },
-  subscription: {
-    plan: { type: String, default: "none" },
-    status: { type: String, default: "pending" },
-    amount: { type: Number, default: 0 },
-    eventsAllowed: { type: Number, default: 0 }
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+// const organizerSchema = new mongoose.Schema({
+//   name: String,
+//   email: String,
+//   phone: String,
+//   password: String,
+//   status: {
+//     type: String,
+//     enum: ["pending", "active", "inactive"],
+//     default: "pending"
+//   },
+//   subscription: {
+//     plan: { type: String, default: "none" },
+//     status: { type: String, default: "pending" },
+//     amount: { type: Number, default: 0 },
+//     eventsAllowed: { type: Number, default: 0 }
+//   },
+//   createdAt: {
+//     type: Date,
+//     default: Date.now
+//   }
+// });
 
 
 
 
 const Attendee = mongoose.model("Attendee", attendeeSchema);
-const Organizer = mongoose.model("Organizer", organizerSchema);
+// const Organizer = mongoose.model("Organizer", organizerSchema);
 
 
 app.post("/register", async (req, res) => {
@@ -212,7 +215,7 @@ if (role === "organizer") {
 
 
 // =======================AdminLogin=============================
-// ================= ADMIN LOGIN (SINGLE ADMIN) =================
+
 app.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -235,6 +238,19 @@ app.post("/admin/login", async (req, res) => {
 });
 
 
+
+
+// ✅ GET ALL ORGANISERS (FOR DASHBOARD)
+app.get("/admin/organisers/all", adminAuth, async (req, res) => {
+  try {
+    const organisers = await Organizer.find();
+    res.json(organisers);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch organisers" });
+  }
+});
+
+
 //pending organiser
 app.get("/admin/organisers/pending", adminAuth, async (req, res) => {
   const organisers = await Organizer.find({ status: "pending" });
@@ -250,6 +266,7 @@ app.put("/admin/organisers/:id/approve", adminAuth, async (req, res) => {
   }
 
 
+
   await Organizer.findByIdAndUpdate(
   req.params.id,
   { status: "active" },
@@ -259,9 +276,6 @@ app.put("/admin/organisers/:id/approve", adminAuth, async (req, res) => {
 
   res.json({ message: "Organiser approved" });
 });
-
-
-
 
 
 /* ================= EVENT ROUTES ================= */
@@ -277,6 +291,9 @@ app.use("/api/bookings", bookingRoutes);
 /* ================= Contact us ROUTES ================= */
 
 app.use("/api/contact", contactRoutes);
+
+
+app.use("/api", organizerRoutes);
 
 
 /* ================= START SERVER ================= */
