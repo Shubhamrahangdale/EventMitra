@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js";
 import Event from "../models/Event.js";
 
+
 export const createBooking = async (req, res) => {
   try {
     const { eventId, attendees, ticketCount, totalAmount } = req.body;

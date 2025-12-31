@@ -7,6 +7,12 @@ import { Calendar, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+//-------------------------------------------1----------------------------------
+import { sendOtp, verifyOtp } from "@/lib/utils";
+
+
+//-------------------------------------------1----------------------------------
+
 const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -17,51 +23,59 @@ const Register = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState("attendee");
-  const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [otp, setOtp] = useState("");
+const [otpSent, setOtpSent] = useState(false);
+const [otpVerified, setOtpVerified] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const validateForm = () => {
-  const emailRegex = /^(?!\.)(?!.*\.\.)[A-Za-z0-9._+\-$]+(?<!\.)@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/;
-  const phoneRegex = /^[0-9]{10}$/;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+    const emailRegex = /^(?!\.)(?!.*\.\.)[A-Za-z0-9._+\-$]+(?<!\.)@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
 
-  if (!emailRegex.test(formData.email)) {
-    toast({
-      title: "Invalid Email ❌",
-      description: "Check your mail ✉️🔎",
-      variant: "destructive",
-    });
-    return false;
-  }
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid Email ❌",
+        description: "Check your mail ✉️🔎",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-  if (!phoneRegex.test(formData.phone)) {
-    toast({
-      title: "Invalid Mobile Number ❌",
-      description: "Mobile number must be exactly 10 digits",
-      variant: "destructive",
-    });
-    return false;
-  }
+    if (!phoneRegex.test(formData.phone)) {
+      toast({
+        title: "Invalid Mobile Number ❌",
+        description: "Mobile number must be exactly 10 digits",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-  if (!passwordRegex.test(formData.password)) {
-    toast({
-      title: "Weak Password ❌",
-      description:
-        "Password must be 8+ characters with uppercase, lowercase, number & special character",
-      variant: "destructive",
-    });
-    return false;
-  }
+    if (!passwordRegex.test(formData.password)) {
+      toast({
+        title: "Weak Password ❌",
+        description:
+          "Password must be 8+ characters with uppercase, lowercase, number & special character",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-  return true;
-};
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+  return;
+}
 
     if (!formData.name || !formData.email || !formData.password) {
       toast({
@@ -98,11 +112,20 @@ const Register = () => {
       });
       return;
     }
+    if (!otpVerified) {
+      toast({
+        title: "Email not verified ❌",
+        description: "Please verify email using OTP",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:2511/register", {
+      const response = await fetch("http://localhost:2511/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,14 +148,14 @@ const Register = () => {
           description: "Your account has been successfully created!",
         });
         if (userType === "organizer") {
-    // organiser will not go ti loginpage it will go successpage 
-    window.location.href = "/register-success";
-  } else {
-    // attendee ko login allow
-    window.location.href = "/login";
-  }
+          // organiser will not go ti loginpage it will go successpage 
+          window.location.href = "/register-success";
+        } else {
+          // attendee ko login allow
+          window.location.href = "/login";
+        }
 
-      
+
       } else {
         toast({
           title: "Registration Failed ❌",
@@ -152,7 +175,47 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  //-----------------------
+  //-------------------------------------------2----------------------------------
+  const handleSendOtp = async () => {
+    if (!formData.email) {
+      toast({ title: "Enter email first ❌", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const res = await sendOtp(formData.email);
+      if (res.success) {
+        toast({ title: "OTP sent to email 📩" });
+        setOtpSent(true);
+      } else {
+        toast({ title: "OTP failed ❌", description: res.message, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Server error ❌", variant: "destructive" });
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      toast({ title: "Enter OTP ❌", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const res = await verifyOtp(formData.email, otp);
+      if (res.success) {
+        toast({ title: "Email verified ✅" });
+        setOtpVerified(true);
+      } else {
+        toast({ title: "Invalid OTP ❌", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Server error ❌", variant: "destructive" });
+    }
+  };
+
+  //-------------------------------------------2----------------------------------
+
   const features = [
     "Create and manage unlimited events",
     "Access to analytics dashboard",
@@ -249,7 +312,33 @@ const Register = () => {
                 />
               </div>
             </div>
+            {/* //-------------------------------------------3----------------------------------
+  //----------------------------------------------------------------------------- */}
+            {!otpSent && (
+              <Button type="button" variant="outline" onClick={handleSendOtp} className="w-full">
+                Send OTP
+              </Button>
+            )}
 
+            {otpSent && !otpVerified && (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+                <Button type="button" onClick={handleVerifyOtp} className="w-full">
+                  Verify OTP
+                </Button>
+              </div>
+            )}
+
+            {otpVerified && (
+              <p className="text-green-600 text-sm font-medium">✅ Email verified</p>
+            )}
+
+            {/* //-------------------------------------------3----------------------------------
+  //----------------------------------------------------------------------------- */}
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
               <div className="relative">

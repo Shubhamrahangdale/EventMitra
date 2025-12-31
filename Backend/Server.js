@@ -12,7 +12,7 @@ import bookingRoutes from "./routes/BookingRoutes.js";
 import contactRoutes from "./routes/ContactRoutes.js";
 import organizerRoutes from "./routes/OrganizerRoutes.js";
 import adminAuth from "./middleware/adminAuth.js";
-
+import authRoutes from "./routes/AuthRoutes.js";
 
 
 
@@ -23,6 +23,12 @@ app.use(cors());
 const PORT = process.env.PORT;
 const MONGO_URI = process.env.MONGO_URI;
 const SECRET_KEY = process.env.SECRET_KEY;
+
+
+
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "LOADED" : "NOT LOADED");
+
 
 /* ================= for Database connection ================= */
 mongoose.connect(MONGO_URI)
@@ -294,6 +300,11 @@ app.use("/api/contact", contactRoutes);
 
 
 app.use("/api", organizerRoutes);
+
+
+
+
+app.use("/api/auth", authRoutes);
 
 
 /* ================= START SERVER ================= */
