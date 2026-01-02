@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import {
   Plus,
   Search,
-  Edit,
   Trash2,
   Eye,
   MoreHorizontal,
   CreditCard,
   IndianRupee,
   Calendar,
+  Check
 } from "lucide-react";
 
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -55,7 +55,6 @@ const AdminOrganisers = () => {
   const [subscriptionFilter, setSubscriptionFilter] = useState("all");
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] =
     useState(false);
@@ -138,40 +137,6 @@ const AdminOrganisers = () => {
       toast({
         title: "Error ❌",
         description: "Failed to add organiser",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // EDIT organiser
-  const handleEdit = async () => {
-    if (!selectedOrganiser) return;
-    try {
-      const res = await fetch(
-        `http://localhost:2511/admin/organisers/${selectedOrganiser._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${adminToken}`,
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-      if (!res.ok) throw new Error();
-
-      toast({
-        title: "Organiser Updated",
-        description: `${formData.name} has been updated successfully.`,
-      });
-      setIsEditDialogOpen(false);
-      setSelectedOrganiser(null);
-      resetForm();
-      fetchAllOrganisers();
-    } catch (err) {
-      toast({
-        title: "Error ❌",
-        description: "Failed to update organiser",
         variant: "destructive",
       });
     }
@@ -267,18 +232,7 @@ const AdminOrganisers = () => {
     }
   };
 
-  const openEditDialog = (organiser) => {
-    setSelectedOrganiser(organiser);
-    setFormData({
-      name: organiser.name || "",
-      email: organiser.email || "",
-      phone: organiser.phone || "",
-      // company: organiser.company || "",
-      status: organiser.status || "pending",
-    });
-    setIsEditDialogOpen(true);
-  };
-
+ 
   const openViewDialog = (organiser) => {
     setSelectedOrganiser(organiser);
     setIsViewDialogOpen(true);
@@ -549,18 +503,13 @@ const AdminOrganisers = () => {
                               <Eye className="w-4 h-4 mr-2" />
                               View
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => openEditDialog(organiser)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
+                            
                             <DropdownMenuItem
                               onClick={() =>
                                 approveOrganiser(organiser._id)
                               }
                             >
-                              <Edit className="w-4 h-4 mr-2" />
+                              < Check className="w-4 h-4 mr-2" />
                               Approve
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -587,72 +536,6 @@ const AdminOrganisers = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* EDIT dialog (UI unchanged, handler wired) */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="glass max-w-md">
-            <DialogHeader>
-              <DialogTitle className="font-display text-2xl">
-                Edit Organiser
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <Input
-                placeholder="Full Name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Phone"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-              />
-              <Select
-                value={formData.status}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, status: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="hero"
-                  className="flex-1"
-                  onClick={handleEdit}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* VIEW dialog (UI unchanged) */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
