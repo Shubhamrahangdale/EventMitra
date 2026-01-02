@@ -25,19 +25,13 @@ import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminOrganisers from "@/pages/admin/AdminOrganisers";
 import AdminEvents from "@/pages/admin/AdminEvents";
+import AdminTransactions from "@/pages/admin/AdminTransactions.jsx"
 import AdminSettings from "@/pages/admin/AdminSettings";
 import ProtectedRoute from "@/pages/admin/ProtectedRoute";
 import { AdminProvider } from "@/context/AdminContext";
-
 import { OrganiserProvider } from "@/context/OrganiserContext";
-
 import { EventProvider } from "@/context/EventContext";
-
 import RegisterSuccess from "@/pages/RegisterSuccess";
-
-
-
-
 
 const App = () => {
   useEffect(() => {
@@ -72,7 +66,7 @@ const App = () => {
                   <Route path="/admin" element={<AdminLogin />} />
 
                   <Route
-                    path="/admin/dashboard"element={
+                    path="/admin/dashboard" element={
                       <ProtectedRoute>
                         <AdminDashboard />
                       </ProtectedRoute>
@@ -95,6 +89,15 @@ const App = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/admin/transactions"
+                    element={
+                      <ProtectedRoute>
+                        <AdminTransactions />
+                      </ProtectedRoute>
+                    }
+                  />
+
 
                   <Route
                     path="/admin/settings"

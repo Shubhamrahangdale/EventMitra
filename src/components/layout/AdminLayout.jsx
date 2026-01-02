@@ -1,14 +1,15 @@
-import React from 'react';
+// import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Users, LogOut, LayoutDashboard, Settings, CalendarDays } from 'lucide-react';
+import { Calendar, Users, LogOut, LayoutDashboard, Settings, CalendarDays, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
- import { useAdmin } from '@/context/AdminContext';
+import { useAdmin } from '@/context/AdminContext';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
   { icon: Users, label: 'Organisers', path: '/admin/organisers' },
   { icon: CalendarDays, label: 'Events', path: '/admin/events' },
+  { icon: IndianRupee, label: 'Transactions', path: '/admin/transactions' },
   { icon: Settings, label: 'Settings', path: '/admin/settings' },
 ];
 

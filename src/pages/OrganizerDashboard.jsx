@@ -1,4 +1,4 @@
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Users, 
-  Ticket, 
+import {
+  Calendar,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Ticket,
   TrendingUp,
   MapPin,
   Clock,
@@ -24,8 +23,13 @@ import {
   LayoutDashboard,
   CalendarDays,
   Settings,
-  LogOut
+  LogOut,
+  Crown,
+  AlertCircle,
+  CreditCard,
+  Sparkles,
 } from "lucide-react";
+
 import { toast } from "@/hooks/use-toast";
 
 const OrganizerDashboard = () => {
@@ -45,36 +49,202 @@ const OrganizerDashboard = () => {
     description: "",
     image: ""
   });
+  // Subscription UI state (NO blocking logic)
+  const [subscription, setSubscription] = useState({
+    status: "none", // "none" | "active" | "expired"
+    plan: "",
+    eventsAllowed: 0,
+    eventsUsed: 0,
+    expiryDate: null,
+  });
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
-  useEffect(() => {
-  const fetchEvents = async () => {
-    const organizerId = localStorage.getItem("userId");
+
+  const subscriptionPlans = [
+    {
+      id: "basic",
+      name: "Basic",
+      price: 4999,
+      events: 5,
+      features: ["Up to 5 active events", "Basic analytics", "Email support"],
+    },
+    {
+      id: "pro",
+      name: "Pro",
+      price: 9999,
+      events: 20,
+      features: ["Up to 20 active events", "Advanced analytics", "Priority support"],
+    },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      price: 19999,
+      events: "Unlimited",
+      features: ["Unlimited events", "Dedicated account manager"],
+    },
+  ];
+
+  const handleBuyPlan = async (plan) => {
     const token = localStorage.getItem("token");
 
     try {
       const res = await fetch(
-        `http://localhost:2511/api/events/organizer/${organizerId}`,
+        "http://localhost:2511/api/subscriptions/create-order",
         {
+          method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ planId: plan.id }),
         }
       );
 
       const data = await res.json();
-      setEvents(data);
+      if (!res.ok) throw new Error(data.message || "Order creation failed");
+
+      const options = {
+        key: data.keyId,
+        amount: data.amount,
+        currency: "INR", // ✅ VERY IMPORTANT
+        name: "EventMitra",
+        description: plan.name,
+        order_id: data.orderId,
+
+        handler: async function (response) {
+          const verifyRes = await fetch(
+            "http://localhost:2511/api/subscriptions/verify",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: plan.id,
+              }),
+            }
+          );
+
+          const verifyData = await verifyRes.json();
+          if (!verifyRes.ok) throw new Error(verifyData.message);
+
+          // ✅ UI UPDATE (THIS WAS MISSING)
+          setSubscription({
+            status: "active",
+            plan: `${plan.name} Plan`,
+            eventsAllowed: plan.events === "Unlimited" ? 999 : plan.events,
+            eventsUsed: 0,
+            expiryDate: new Date(
+              new Date().setMonth(new Date().getMonth() + 1)
+            ).toISOString(),
+          });
+
+          setShowPurchaseModal(false);
+          setSelectedPlan(null);
+          setActiveTab("subscription");
+
+          toast({
+            title: "Payment Successful 🎉",
+            description: "Your subscription is now active",
+          });
+        },
+
+
+        prefill: {
+          name: "Organizer",
+          email: "organizer@example.com",
+        },
+
+        theme: {
+          color: "#2563EB",
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (err) {
-      console.error(err);
       toast({
-        title: "Error",
-        description: "Failed to load events",
-        variant: "destructive"
+        title: "Payment Error",
+        description: err.message,
+        variant: "destructive",
       });
     }
   };
 
-  fetchEvents();
-}, []);
+
+
+
+  const handlePurchasePlan = (plan) => {
+    setSelectedPlan(plan);
+    setShowPurchaseModal(true);
+  };
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const organizerId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(
+          `http://localhost:2511/api/events/organizer/${organizerId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        const data = await res.json();
+        setEvents(data);
+      } catch (err) {
+        console.error(err);
+        toast({
+          title: "Error",
+          description: "Failed to load events",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchEvents();
+  }, []);
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(
+          "http://localhost:2511/api/organizer/me",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await res.json();
+
+        if (data.subscription && data.subscription.status === "active") {
+          setSubscription({
+            status: "active",
+            plan: `${data.subscription.plan} Plan`,
+            eventsAllowed: data.subscription.eventsAllowed,
+            eventsUsed: data.subscription.eventsUsed || 0,
+            expiryDate: data.subscription.expiryDate,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch subscription", err);
+      }
+    };
+
+    fetchSubscription();
+  }, []);
+
 
 
   const categories = ["Cultural", "Music", "Business", "Sports", "Food", "Art", "Technology", "Education"];
@@ -82,12 +252,12 @@ const OrganizerDashboard = () => {
 
   const stats = {
     totalEvents: events.length,
-  publishedEvents: events.filter(e => e.status === "published").length,
-  totalTicketsSold: events.reduce((acc, e) => acc + (e.soldTickets || 0), 0),
-  totalRevenue: events.reduce(
-    (acc, e) => acc + ((e.soldTickets || 0) * (e.price || 0)),
-    0
-  ),
+    publishedEvents: events.filter(e => e.status === "published").length,
+    totalTicketsSold: events.reduce((acc, e) => acc + (e.soldTickets || 0), 0),
+    totalRevenue: events.reduce(
+      (acc, e) => acc + ((e.soldTickets || 0) * (e.price || 0)),
+      0
+    ),
   };
 
   const resetForm = () => {
@@ -113,7 +283,7 @@ const OrganizerDashboard = () => {
 
   const handleEditEvent = (event) => {
     setActiveTab("events");
-     setEditingEvent(event);
+    setEditingEvent(event);
 
     setFormData({
       title: event.title,
@@ -127,189 +297,135 @@ const OrganizerDashboard = () => {
       description: event.description || "",
       image: event.image || ""
     });
-   
+
     setShowCreateModal(true);
   };
 
   //handle the event 
   const handleDeleteEvent = async (eventId) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  try {
-    await fetch(`http://localhost:2511/api/events/${eventId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      await fetch(`http://localhost:2511/api/events/${eventId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    setEvents(prev => prev.filter(e => e._id !== eventId));
+      setEvents(prev => prev.filter(e => e._id !== eventId));
 
-    toast({
-      title: "Event Deleted",
-      description: "Event deleted successfully",
-    });
-  } catch (err) {
-    toast({
-      title: "Error",
-      description: "Failed to delete event",
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: "Event Deleted",
+        description: "Event deleted successfully",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    }
+  };
   //Toggle Publish and Unpublished
- 
- const handleToggleStatus = async (eventId, currentStatus) => {
-  const token = localStorage.getItem("token");
 
-  try {
-    const res = await fetch(
-      `http://localhost:2511/api/events/${eventId}/status`,
-      {
-        method: "PATCH",
+  const handleToggleStatus = async (eventId, currentStatus) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        `http://localhost:2511/api/events/${eventId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: currentStatus === "published" ? "draft" : "published",
+          }),
+        }
+      );
+
+      const updatedEvent = await res.json();
+
+      setEvents(prev =>
+        prev.map(e => (e._id === eventId ? updatedEvent : e))
+      );
+
+      toast({
+        title: "Status Updated",
+        description: `Event is now ${updatedEvent.status}`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+
+    const url = editingEvent
+      ? `http://localhost:2511/api/events/${editingEvent._id}`
+      : "http://localhost:2511/api/events";
+
+    const method = editingEvent ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          status: currentStatus === "published" ? "draft" : "published",
-        }),
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // will show backend message like:
+        // "Only organisers can create events" or
+        // "Subscription required or event limit reached ❌"
+        throw new Error(data.message || "Event creation failed ❌");
       }
-    );
 
-    const updatedEvent = await res.json();
+      const savedEvent = data.event || data; // support both shapes
 
-    setEvents(prev =>
-      prev.map(e => (e._id === eventId ? updatedEvent : e))
-    );
+      setEvents((prev) =>
+        editingEvent
+          ? prev.map((e) => (e._id === savedEvent._id ? savedEvent : e))
+          : [savedEvent, ...prev]
+      );
 
-    toast({
-      title: "Status Updated",
-      description: `Event is now ${updatedEvent.status}`,
-    });
-  } catch (err) {
-    toast({
-      title: "Error",
-      description: "Failed to update status",
-      variant: "destructive",
-    });
-  }
-};
+      toast({
+        title: editingEvent ? "Event Updated" : "Event Created",
+        description:
+          data.message || "Event submitted for admin approval ✅",
+      });
 
-   
-  
-
-//This stop creating new Event 
-
-// const handleSubmit = async (e) => {
-//   e.preventDefault();
-
-//   const token = localStorage.getItem("token");
-
-//   const url = editingEvent
-//     ? `http://localhost:2511/api/events/${editingEvent._id}`
-//     : "http://localhost:2511/api/events";
-
-//   const method = editingEvent ? "PUT" : "POST";
-
-//   const res = await fetch(url, {
-//     method,
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify(formData),
-//   });
-
-//   if (!res.ok){
-//      const text = await res.text(); 
-//     throw new Error(data.message);
-//   }
-//   const data = await res.json();
-
-  
-
-//   setEvents(prev =>
-//     editingEvent
-//       ? prev.map(e => (e._id === data._id ? data : e))
-//       : [data, ...prev]
-//   );
-
-//   toast({
-//     title: editingEvent ? "Event Updated" : "Event Created",
-//   });
-
-//   setShowCreateModal(false);
-//   resetForm();
-// };
-
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const token = localStorage.getItem("token");
-
-  const url = editingEvent
-    ? `http://localhost:2511/api/events/${editingEvent._id}`
-    : "http://localhost:2511/api/events";
-
-  const method = editingEvent ? "PUT" : "POST";
-
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json(); // { message, event } on create
-
-    if (!res.ok) {
-      // will show backend message like:
-      // "Only organisers can create events" or
-      // "Subscription required or event limit reached ❌"
-      throw new Error(data.message || "Event creation failed ❌");
+      setShowCreateModal(false);
+      resetForm();
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to save event",
+        variant: "destructive",
+      });
     }
-
-    const savedEvent = data.event || data; // support both shapes
-
-    setEvents((prev) =>
-      editingEvent
-        ? prev.map((e) => (e._id === savedEvent._id ? savedEvent : e))
-        : [savedEvent, ...prev]
-    );
-
-    toast({
-      title: editingEvent ? "Event Updated" : "Event Created",
-      description:
-        data.message || "Event submitted for admin approval ✅",
-    });
-
-    setShowCreateModal(false);
-    resetForm();
-  } catch (err) {
-    console.error(err);
-    toast({
-      title: "Error",
-      description: err.message || "Failed to save event",
-      variant: "destructive",
-    });
-  }
-};
-
-
-
-
-
-
-
+  };
 
   const sidebarItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "events", label: "My Events", icon: CalendarDays },
+    { id: "subscription", label: "Subscription", icon: CreditCard },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -334,11 +450,10 @@ const handleSubmit = async (e) => {
               <li key={item.id}>
                 <button
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === item.id
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === item.id
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
@@ -364,9 +479,10 @@ const handleSubmit = async (e) => {
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display text-2xl font-bold text-foreground">
+              <h1 className="font-display text-2xl font-bold text-slate-900">
                 {activeTab === "dashboard" && "Organizer Dashboard"}
                 {activeTab === "events" && "My Events"}
+                {activeTab === "subscription" && "Subscription"}
                 {activeTab === "settings" && "Settings"}
               </h1>
               <p className="text-muted-foreground text-sm">
@@ -452,8 +568,8 @@ const handleSubmit = async (e) => {
                   <div className="space-y-4">
                     {events.slice(0, 3).map((event) => (
                       <div key={event._id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
-                        <img 
-                          src={event.image} 
+                        <img
+                          src={event.image}
                           alt={event.title}
                           className="w-16 h-16 rounded-lg object-cover"
                         />
@@ -496,8 +612,8 @@ const handleSubmit = async (e) => {
                     <Card key={event._id} className="bg-card border-border overflow-hidden">
                       <CardContent className="p-0">
                         <div className="flex flex-col md:flex-row">
-                          <img 
-                            src={event.image} 
+                          <img
+                            src={event.image}
                             alt={event.title}
                             className="w-full md:w-48 h-48 object-cover"
                           />
@@ -548,10 +664,10 @@ const handleSubmit = async (e) => {
                                 Edit
                               </Button>
                               <Button
-  variant="outline"
-  size="sm"
-  onClick={() => handleToggleStatus(event._id, event.status)}
->
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleStatus(event._id, event.status)}
+                              >
 
                                 <Eye className="w-4 h-4 mr-1" />
                                 {event.status === "published" ? "Unpublish" : "Publish"}
@@ -562,8 +678,8 @@ const handleSubmit = async (e) => {
                                   View
                                 </Button>
                               </Link>
-                              <Button 
-                                variant="destructive" 
+                              <Button
+                                variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteEvent(event._id)}
                               >
@@ -580,6 +696,192 @@ const handleSubmit = async (e) => {
               )}
             </div>
           )}
+          {/* Subscription Tab */}
+          {activeTab === "subscription" && (
+            <div className="space-y-6">
+              <Card
+                className={`bg-white border-2 rounded-2xl ${subscription.status === "active"
+                    ? "border-green-500/30"
+                    : subscription.status === "expired"
+                      ? "border-red-500/30"
+                      : "border-orange-300/40"
+                  }`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`w-16 h-16 rounded-2xl flex items-center justify-center ${subscription.status === "active"
+                            ? "bg-green-500/10"
+                            : subscription.status === "expired"
+                              ? "bg-red-500/10"
+                              : "bg-orange-100"
+                          }`}
+                      >
+                        {subscription.status === "active" ? (
+                          <Crown className="w-8 h-8 text-green-600" />
+                        ) : subscription.status === "expired" ? (
+                          <AlertCircle className="w-8 h-8 text-red-500" />
+                        ) : (
+                          <CreditCard className="w-8 h-8 text-orange-500" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h2 className="text-2xl font-display font-bold text-slate-900">
+                            {subscription.status === "active"
+                              ? subscription.plan
+                              : subscription.status === "expired"
+                                ? "Subscription Expired"
+                                : "No Active Subscription"}
+                          </h2>
+                          <Badge
+                            className={`${subscription.status === "active"
+                                ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                : subscription.status === "expired"
+                                  ? "bg-red-500/10 text-red-500 border-red-500/20"
+                                  : "bg-orange-100 text-orange-700 border-orange-200"
+                              }`}
+                          >
+                            {subscription.status === "active"
+                              ? "Active"
+                              : subscription.status === "expired"
+                                ? "Expired"
+                                : "None"}
+                          </Badge>
+                        </div>
+                        <p className="text-slate-500">
+                          {subscription.status === "active"
+                            ? `Valid until ${new Date(
+                              subscription.expiryDate
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}`
+                            : subscription.status === "expired"
+                              ? "Renew your subscription to continue creating events"
+                              : "Subscribe to create and manage multiple events"}
+                        </p>
+                      </div>
+                    </div>
+                    {subscription.status !== "active" && (
+                      <Button
+                        className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-5 gap-2"
+                        onClick={() => setShowPurchaseModal(true)}
+                      >
+                        <Sparkles className="w-5 h-5" />
+                        Subscribe Now
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {subscription.status === "active" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="bg-white border border-slate-100 rounded-2xl">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-slate-500 text-sm">
+                            Events Used
+                          </p>
+                          <p className="font-display text-3xl font-bold text-slate-900">
+                            {subscription.eventsUsed}/{subscription.eventsAllowed}
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+                          <CalendarDays className="w-6 h-6 text-orange-500" />
+                        </div>
+                      </div>
+                      <div className="mt-4 w-full bg-slate-100 rounded-full h-2">
+                        <div
+                          className="bg-orange-500 h-2 rounded-full transition-all"
+                          style={{
+                            width: `${subscription.eventsAllowed > 0
+                                ? (subscription.eventsUsed /
+                                  subscription.eventsAllowed) *
+                                100
+                                : 0
+                              }%`,
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white border border-slate-100 rounded-2xl">
+                    <CardContent className="p-6">
+                      <p className="text-slate-500 text-sm mb-2">Plan</p>
+                      <p className="font-display text-xl font-bold text-slate-900">
+                        {subscription.plan || "N/A"}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white border border-slate-100 rounded-2xl">
+                    <CardContent className="p-6">
+                      <p className="text-slate-500 text-sm mb-2">Status</p>
+                      <p className="font-display text-xl font-bold text-slate-900 capitalize">
+                        {subscription.status}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {subscriptionPlans.map((plan) => (
+                  <Card
+                    key={plan.id}
+                    className={`bg-white border border-slate-100 rounded-2xl relative ${plan.id === "pro" ? "border-orange-400" : ""
+                      }`}
+                  >
+                    {plan.id === "pro" && (
+                      <div className="absolute -top-2 right-4 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs">
+                        Most popular
+                      </div>
+                    )}
+                    <CardContent className="p-6 space-y-4">
+                      <div className="space-y-1">
+                        <h3 className="font-display text-xl font-semibold text-slate-900">
+                          {plan.name}
+                        </h3>
+                        <p className="text-slate-500 text-sm">
+                          {plan.highlight}
+                        </p>
+                      </div>
+                      <p className="font-display text-3xl font-bold text-slate-900">
+                        ₹{plan.price}
+                        <span className="text-sm font-normal text-slate-500">
+                          /month
+                        </span>
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        Up to {plan.events} active events
+                      </p>
+                      <ul className="space-y-1 text-sm text-slate-500">
+                        {plan.features.map((f) => (
+                          <li key={f}>• {f}</li>
+                        ))}
+                      </ul>
+                      <Button
+                        className="w-full mt-2 rounded-full"
+                        variant={plan.id === "pro" ? "default" : "outline"}
+                        onClick={() => handlePurchasePlan(plan)}
+                      >
+                        Choose {plan.name}
+                      </Button>
+
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+
 
           {/* Settings Tab */}
           {activeTab === "settings" && (
@@ -609,8 +911,8 @@ const handleSubmit = async (e) => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="orgBio">Bio</Label>
-                    <Textarea 
-                      id="orgBio" 
+                    <Textarea
+                      id="orgBio"
                       placeholder="Tell attendees about your organization..."
                       defaultValue="We are a premier event management company specializing in cultural and corporate events across India."
                       rows={4}
@@ -635,7 +937,7 @@ const handleSubmit = async (e) => {
               <h2 className="font-display text-2xl font-bold text-foreground">
                 {editingEvent ? "Edit Event" : "Create New Event"}
               </h2>
-              <button 
+              <button
                 onClick={() => { setShowCreateModal(false); resetForm(); }}
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -646,11 +948,11 @@ const handleSubmit = async (e) => {
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Event Title *</Label>
-                <Input 
-                  id="title" 
+                <Input
+                  id="title"
                   placeholder="Enter event title"
                   value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
               </div>
@@ -658,21 +960,21 @@ const handleSubmit = async (e) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="date">Date *</Label>
-                  <Input 
-                    id="date" 
+                  <Input
+                    id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="time">Time *</Label>
-                  <Input 
-                    id="time" 
+                  <Input
+                    id="time"
                     type="time"
                     value={formData.time}
-                    onChange={(e) => setFormData({...formData, time: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                     required
                   />
                 </div>
@@ -682,12 +984,12 @@ const handleSubmit = async (e) => {
                 <Label htmlFor="location">Venue/Location *</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input 
-                    id="location" 
+                  <Input
+                    id="location"
                     className="pl-11"
                     placeholder="Enter venue name and address"
                     value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     required
                   />
                 </div>
@@ -700,7 +1002,7 @@ const handleSubmit = async (e) => {
                     id="city"
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-foreground"
                     value={formData.city}
-                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     required
                   >
                     <option value="">Select city</option>
@@ -715,7 +1017,7 @@ const handleSubmit = async (e) => {
                     id="category"
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-foreground"
                     value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     required
                   >
                     {categories.map(cat => (
@@ -730,13 +1032,13 @@ const handleSubmit = async (e) => {
                   <Label htmlFor="price">Ticket Price (₹)</Label>
                   <div className="relative">
                     <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input 
-                      id="price" 
+                    <Input
+                      id="price"
                       type="number"
                       className="pl-11"
                       placeholder="0 for free"
                       value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
                   </div>
                 </div>
@@ -744,13 +1046,13 @@ const handleSubmit = async (e) => {
                   <Label htmlFor="totalTickets">Total Tickets</Label>
                   <div className="relative">
                     <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input 
-                      id="totalTickets" 
+                    <Input
+                      id="totalTickets"
                       type="number"
                       className="pl-11"
                       placeholder="100"
                       value={formData.totalTickets}
-                      onChange={(e) => setFormData({...formData, totalTickets: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, totalTickets: e.target.value })}
                     />
                   </div>
                 </div>
@@ -760,23 +1062,23 @@ const handleSubmit = async (e) => {
                 <Label htmlFor="image">Image URL</Label>
                 <div className="relative">
                   <Image className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input 
-                    id="image" 
+                  <Input
+                    id="image"
                     className="pl-11"
                     placeholder="https://example.com/image.jpg"
                     value={formData.image}
-                    onChange={(e) => setFormData({...formData, image: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
+                <Textarea
+                  id="description"
                   placeholder="Describe your event..."
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                 />
               </div>
@@ -791,6 +1093,68 @@ const handleSubmit = async (e) => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Subscription purchase modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <h2 className="font-display text-2xl font-bold text-slate-900">
+                Confirm Subscription
+              </h2>
+              <button
+                onClick={() => {
+                  setShowPurchaseModal(false);
+                  setSelectedPlan(null);
+                }}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-slate-600 text-sm">
+                You are about to purchase the{" "}
+                <span className="font-semibold">
+                  {selectedPlan?.name} Plan
+                </span>{" "}
+                for{" "}
+                <span className="font-semibold">
+                  ₹{selectedPlan?.price}/month
+                </span>
+                .
+              </p>
+              <ul className="list-disc list-inside text-sm text-slate-500 space-y-1">
+                {selectedPlan?.features?.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-full"
+                  onClick={() => {
+                    setShowPurchaseModal(false);
+                    setSelectedPlan(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 gap-2 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+                  disabled={!selectedPlan}
+                  onClick={() => handleBuyPlan(selectedPlan)}
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Confirm & Pay {selectedPlan?.name}
+                </Button>
+
+              </div>
+            </div>
           </div>
         </div>
       )}

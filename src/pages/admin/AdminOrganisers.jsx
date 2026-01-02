@@ -66,7 +66,6 @@ const AdminOrganisers = () => {
     name: "",
     email: "",
     phone: "",
-    // company: "",
     status: "pending",
   });
 
@@ -88,8 +87,6 @@ const AdminOrganisers = () => {
     const matchesSearch =
       org.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       org.email?.toLowerCase().includes(searchQuery.toLowerCase())
-      //  ||
-      // org.company?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || org.status === statusFilter;
     const matchesSubscription =
@@ -109,7 +106,7 @@ const AdminOrganisers = () => {
 
   // ADD organiser (admin creates organiser account)
   const handleAdd = async () => {
-    if (!formData.name || !formData.email || !formData.phone ) {
+    if (!formData.name || !formData.email || !formData.phone) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields.",
@@ -367,13 +364,6 @@ const AdminOrganisers = () => {
                     setFormData({ ...formData, phone: e.target.value })
                   }
                 />
-                {/* <Input
-                  placeholder="Company Name"
-                  value={formData.company}
-                  onChange={(e) =>
-                    setFormData({ ...formData, company: e.target.value })
-                  }
-                /> */}
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
@@ -502,9 +492,6 @@ const AdminOrganisers = () => {
                             <p className="font-medium text-foreground">
                               {organiser.name}
                             </p>
-                            {/* <p className="text-sm text-muted-foreground">
-                              {organiser.company}
-                            </p> */}
                           </div>
                         </div>
                       </td>
@@ -518,41 +505,31 @@ const AdminOrganisers = () => {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            organiser.status === "active"
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${organiser.status === "active"
                               ? "bg-success/10 text-success"
                               : organiser.status === "pending"
-                              ? "bg-accent/20 text-accent-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
+                                ? "bg-accent/20 text-accent-foreground"
+                                : "bg-muted text-muted-foreground"
+                            }`}
                         >
                           {organiser.status
                             ? organiser.status.charAt(0).toUpperCase() +
-                              organiser.status.slice(1)
+                            organiser.status.slice(1)
                             : ""}
                         </span>
                       </td>
                       <td className="py-4 px-4">
                         {getSubscriptionBadge(organiser.subscription)}
                       </td>
-                      {/* <td className="py-4 px-4">
+                      <td className="py-4 px-4">
                         <span className="text-foreground font-medium">
-                          {organiser.eventsManaged || 0}
+                          {organiser.subscription?.eventsUsed || 0}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {" "}
                           / {organiser.subscription?.eventsAllowed || 0}
                         </span>
-                      </td> */}
-                    <td className="py-4 px-4">
-  <span className="text-foreground font-medium">
-    {organiser.subscription?.eventsUsed || 0}
-  </span>
-  <span className="text-xs text-muted-foreground">
-    {" "}
-    / {organiser.subscription?.eventsAllowed || 0}
-  </span>
-</td>
+                      </td>
 
 
                       <td className="py-4 px-4 text-right">
@@ -580,21 +557,12 @@ const AdminOrganisers = () => {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                openSubscriptionDialog(organiser)
+                                approveOrganiser(organiser._id)
                               }
                             >
-                              <CreditCard className="w-4 h-4 mr-2" />
-                              Subscription
+                              <Edit className="w-4 h-4 mr-2" />
+                              Approve
                             </DropdownMenuItem>
-                            {organiser.status === "pending" && (
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  approveOrganiser(organiser._id)
-                                }
-                              >
-                                Approve
-                              </DropdownMenuItem>
-                            )}
                             <DropdownMenuItem
                               onClick={() => handleDelete(organiser)}
                               className="text-destructive"
@@ -651,13 +619,6 @@ const AdminOrganisers = () => {
                   setFormData({ ...formData, phone: e.target.value })
                 }
               />
-              {/* <Input
-                placeholder="Company"
-                value={formData.company}
-                onChange={(e) =>
-                  setFormData({ ...formData, company: e.target.value })
-                }
-              /> */}
               <Select
                 value={formData.status}
                 onValueChange={(value) =>

@@ -13,7 +13,8 @@ import contactRoutes from "./routes/ContactRoutes.js";
 import organizerRoutes from "./routes/OrganizerRoutes.js";
 import adminAuth from "./middleware/adminAuth.js";
 import authRoutes from "./routes/AuthRoutes.js";
-
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import adminSubscriptionRoutes from "./routes/adminSubscriptionRoutes.js";
 
 
 const app = express();
@@ -30,14 +31,11 @@ console.log("EMAIL_USER:", process.env.EMAIL_USER);
 console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "LOADED" : "NOT LOADED");
 
 
-/* ================= for Database connection ================= */
+// For DataBase Connection
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected ✔"))
   .catch(() => console.log("MongoDB Error ❌"));
 
-
-
-  // 👇 ADD BELOW THIS
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@eventmitra.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -50,35 +48,7 @@ const attendeeSchema = new mongoose.Schema({
   password: String
 });
 
-
-// const organizerSchema = new mongoose.Schema({
-//   name: String,
-//   email: String,
-//   phone: String,
-//   password: String,
-//   status: {
-//     type: String,
-//     enum: ["pending", "active", "inactive"],
-//     default: "pending"
-//   },
-//   subscription: {
-//     plan: { type: String, default: "none" },
-//     status: { type: String, default: "pending" },
-//     amount: { type: Number, default: 0 },
-//     eventsAllowed: { type: Number, default: 0 }
-//   },
-//   createdAt: {
-//     type: Date,
-//     default: Date.now
-//   }
-// });
-
-
-
-
 const Attendee = mongoose.model("Attendee", attendeeSchema);
-// const Organizer = mongoose.model("Organizer", organizerSchema);
-
 
 app.post("/register", async (req, res) => {
   try {
@@ -180,7 +150,7 @@ app.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Wrong password ❌" });
     }
-    // 🔴 BLOCK ORGANIZER LOGIN IF NOT APPROVED
+    //  BLOCK ORGANIZER LOGIN IF NOT APPROVED
 if (role === "organizer") {
   if (user.status === "pending") {
     return res.status(403).json({
@@ -220,7 +190,7 @@ if (role === "organizer") {
 });
 
 
-// =======================AdminLogin=============================
+// AdminLogin
 
 app.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
@@ -246,7 +216,7 @@ app.post("/admin/login", async (req, res) => {
 
 
 
-// ✅ GET ALL ORGANISERS (FOR DASHBOARD)
+// Get All Organiser
 app.get("/admin/organisers/all", adminAuth, async (req, res) => {
   try {
     const organisers = await Organizer.find();
@@ -298,14 +268,21 @@ app.use("/api/bookings", bookingRoutes);
 
 app.use("/api/contact", contactRoutes);
 
+/* ================= Organizer ROUTES ================= */
 
 app.use("/api", organizerRoutes);
 
-
-
+/* ================= Auth ROUTES ================= */
 
 app.use("/api/auth", authRoutes);
 
+/* ================= Subscription ROUTES ================= */
+
+app.use("/api/subscriptions", subscriptionRoutes);
+
+/* ================= AdminSubscription ROUTES ================= */
+
+app.use("/api/subscriptions", adminSubscriptionRoutes);
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () =>

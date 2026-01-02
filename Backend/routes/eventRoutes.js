@@ -15,9 +15,13 @@ import {
   getAllAdminEvents
 } from "../controllers/eventController.js";
 
+import checkSubscription from "../middleware/checkSubscription.js";
+
 const router = express.Router();
 
-router.post("/", auth, createEvent);
+
+router.post("/", auth, checkSubscription, createEvent);
+
 
 router.get("/organizer/:id", auth, getOrganizerEvents);
 router.get("/", getAllEvents);
@@ -27,7 +31,7 @@ router.patch("/:id/status", publishEvent);
 router.put("/:id", editEvent);
 
 
-// ✅ ADMIN ROUTES
+// Admin Routes
 router.get("/admin/events/pending", adminAuth, eventToAdmin);
 router.put("/admin/events/:id/approve", adminAuth, eventToApprove);
 router.put(
