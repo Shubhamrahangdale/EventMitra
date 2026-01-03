@@ -1,6 +1,8 @@
 import express from "express";
 import auth from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
+import checkSubscription from "../middleware/checkSubscription.js";
+
 import {
   createEvent,
   getOrganizerEvents,
@@ -12,40 +14,28 @@ import {
   eventToAdmin,
   eventToApprove,
   eventToReject,
-  getAllAdminEvents
+  getAllAdminEvents,
 } from "../controllers/eventController.js";
-
-import checkSubscription from "../middleware/checkSubscription.js";
 
 const router = express.Router();
 
-
+// Organizer routes
 router.post("/", auth, checkSubscription, createEvent);
-
-
 router.get("/organizer/:id", auth, getOrganizerEvents);
+
+// Public routes
 router.get("/", getAllEvents);
 router.get("/:id", singleEvent);
-router.delete("/:id", deleteEvent);
-router.patch("/:id/status", publishEvent);
-router.put("/:id", editEvent);
 
+// Organizer management
+router.delete("/:id", auth, deleteEvent);
+router.patch("/:id/status", auth, publishEvent);
+router.put("/:id", auth, editEvent);
 
-// Admin Routes
+// Admin routes
 router.get("/admin/events/pending", adminAuth, eventToAdmin);
 router.put("/admin/events/:id/approve", adminAuth, eventToApprove);
-router.put(
-  "/admin/events/:id/reject",
-  adminAuth,
-  eventToReject
-);
-router.get(
-  "/admin/events/all",
-  adminAuth,    
-  getAllAdminEvents
-);
-
-
-
+router.put("/admin/events/:id/reject", adminAuth, eventToReject);
+router.get("/admin/events/all", adminAuth, getAllAdminEvents);
 
 export default router;

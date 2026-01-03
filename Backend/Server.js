@@ -270,7 +270,7 @@ app.use("/api/contact", contactRoutes);
 
 /* ================= Organizer ROUTES ================= */
 
-app.use("/api", organizerRoutes);
+app.use("/api/organizer", organizerRoutes);
 
 /* ================= Auth ROUTES ================= */
 

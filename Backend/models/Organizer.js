@@ -15,8 +15,8 @@ const organizerSchema = new mongoose.Schema({
   subscription: {
     plan: {
       type: String,
-      enum: ["none", "monthly", "annual"],
-      default: "none",
+      enum: ["basic", "pro", "enterprise"],
+      default: "basic",
     },
     status: {
       type: String,

@@ -1,38 +1,21 @@
 import Event from "../models/Event.js";
-import Organizer from "../models/Organizer.js";
 
-
+// CREATE EVENT (subscription already validated by middleware)
 export const createEvent = async (req, res) => {
   try {
-    if (req.user.role !== "organizer") {
-      return res
-        .status(403)
-        .json({ message: "Only organisers can create events" });
-    }
-
-    const organiser = await Organizer.findById(req.user.id);
-
-    if (!organiser) {
-      return res.status(404).json({ message: "Organiser not found" });
-    }
-
-    if (!organiser.subscription) {
-      return res
-        .status(403)
-        .json({ message: "No subscription found for organiser ❌" });
-    }
-
-    if (
-      organiser.subscription.status !== "active" ||
-      organiser.subscription.eventsUsed >= organiser.subscription.eventsAllowed
-    ) {
-      return res.status(403).json({
-        message: "Subscription required or event limit reached ❌",
-      });
-    }
-
+    const organiser = req.organizer;
+    console.log("EVENT PAYLOAD:", req.body); // 🔥 ADD THIS
     const event = await Event.create({
-      ...req.body,
+      title: req.body.title,
+      date: new Date(req.body.date), // 🔥 FIX
+      time: req.body.time,
+      location: req.body.location,
+      city: req.body.city,
+      category: req.body.category,
+      price: Number(req.body.price || 0), // 🔥 FIX
+      totalTickets: Number(req.body.totalTickets || 0), // 🔥 FIX
+      image: req.body.image,
+      description: req.body.description,
       organizerId: organiser._id,
       status: "pending",
     });
@@ -50,142 +33,125 @@ export const createEvent = async (req, res) => {
   }
 };
 
-
+// ADMIN: pending events
 export const eventToAdmin = async (req, res) => {
   try {
-    const events = await Event.find({ status: "pending" })
-      .populate("organizerId", "name email phone");
-
+    const events = await Event.find({ status: "pending" }).populate(
+      "organizerId",
+      "name email phone"
+    );
     res.json(events);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Failed to fetch pending events" });
   }
 };
 
-// Approve Event 
+// ADMIN: approve
 export const eventToApprove = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
     event.status = "published";
     await event.save();
 
     res.json({ message: "Event approved & published" });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Event approval failed" });
   }
 };
 
-// Reject Event
-
+// ADMIN: reject
 export const eventToReject = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
     event.status = "rejected";
     await event.save();
 
     res.json({ message: "Event rejected successfully" });
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Event rejection failed" });
   }
 };
 
-
+// ADMIN: all events
 export const getAllAdminEvents = async (req, res) => {
   try {
     const events = await Event.find().populate("organizerId");
     res.json(events);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Failed to fetch events" });
   }
 };
 
-
-
-
-
-// Get Organiser event
+// ORGANIZER EVENTS
 export const getOrganizerEvents = async (req, res) => {
   try {
     const events = await Event.find({ organizerId: req.user.id });
     res.json(events);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Error fetching organizer events" });
   }
 };
 
-// get all event published
+// PUBLIC EVENTS
 export const getAllEvents = async (req, res) => {
   try {
     const events = await Event.find({ status: "published" });
     res.json(events);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Error fetching events" });
   }
 };
 
-// Get Single event by id
+// SINGLE EVENT
 export const singleEvent = async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id).populate("organizerId", "name email phone");
+    const event = await Event.findById(req.params.id).populate(
+      "organizerId",
+      "name email phone"
+    );
 
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
     res.json(event);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Invalid event ID" });
   }
 };
 
-// Delete Single Event by ID
+// DELETE EVENT
 export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
-
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
     res.json({ message: "Event deleted successfully" });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to delete event" });
   }
 };
-// Publish or Unpublish Single Event 
 
+// PUBLISH / UNPUBLISH
 export const publishEvent = async (req, res) => {
   try {
-    const { status } = req.body; 
-
     const event = await Event.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { status: req.body.status },
       { new: true }
     );
 
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
+    if (!event) return res.status(404).json({ message: "Event not found" });
 
     res.json(event);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to update status" });
   }
 };
 
-// Edit Event 
-
+// EDIT EVENT
 export const editEvent = async (req, res) => {
   try {
     const updatedEvent = await Event.findByIdAndUpdate(
@@ -194,13 +160,11 @@ export const editEvent = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedEvent) {
+    if (!updatedEvent)
       return res.status(404).json({ message: "Event not found" });
-    }
 
     res.json(updatedEvent);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to update event" });
   }
 };
-
