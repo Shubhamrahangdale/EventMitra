@@ -58,7 +58,7 @@ app.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Invalid role ❌" });
     }
 
-  const emailRegex = /^(?!\.)(?!.*\.\.)[A-Za-z0-9._+\-$]+(?<!\.)@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/;
+    const emailRegex = /^(?!\.)(?!.*\.\.)[A-Za-z0-9._+\-$]+(?<!\.)@[A-Za-z0-9-]+(\.[A-Za-z]{2,})+$/;
     const phoneRegex = /^[0-9]{10}$/;
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
@@ -106,12 +106,12 @@ app.post("/register", async (req, res) => {
       });
     } else {
       await Organizer.create({
-  name,
-  email,
-  phone,
-  password: hashedPassword,
-  status: "pending"
-});
+        name,
+        email,
+        phone,
+        password: hashedPassword,
+        status: "pending"
+      });
 
 
     }
@@ -151,19 +151,19 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Wrong password ❌" });
     }
     //  BLOCK ORGANIZER LOGIN IF NOT APPROVED
-if (role === "organizer") {
-  if (user.status === "pending") {
-    return res.status(403).json({
-      message: "Your account is waiting for admin approval"
-    });
-  }
+    if (role === "organizer") {
+      if (user.status === "pending") {
+        return res.status(403).json({
+          message: "Your account is waiting for admin approval"
+        });
+      }
 
-  if (user.status === "inactive") {
-    return res.status(403).json({
-      message: "Your account is temporarily blocked by admin"
-    });
-  }
-}
+      if (user.status === "inactive") {
+        return res.status(403).json({
+          message: "Your account is temporarily blocked by admin"
+        });
+      }
+    }
 
 
 
@@ -174,13 +174,13 @@ if (role === "organizer") {
     );
 
     res.json({
-      message: "Login successful 🎉",
+      message: "Login successfull 🎉",
       token,
       user: {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role 
+        role
       }
     });
 
@@ -244,10 +244,10 @@ app.put("/admin/organisers/:id/approve", adminAuth, async (req, res) => {
 
 
   await Organizer.findByIdAndUpdate(
-  req.params.id,
-  { status: "active" },
-  { new: true }
-);
+    req.params.id,
+    { status: "active" },
+    { new: true }
+  );
 
 
   res.json({ message: "Organiser approved" });

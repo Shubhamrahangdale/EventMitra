@@ -279,14 +279,16 @@ const AdminTransactions = () => {
                       </td>
 
                       <td className="py-4 px-4">
-                        <p className="text-foreground">
-                          {(txn.eventsUsed ?? 0)} /{" "}
-                          {txn.eventsAllowed === 999
-                            ? "∞"
-                            : txn.eventsAllowed ?? 0}
-                        </p>
+  <p className="text-foreground">
+    {txn.eventsAllowed > 0
+      ? `${txn.eventsUsed ?? 0} / ${
+          txn.eventsAllowed === 999 ? "∞" : txn.eventsAllowed
+        }`
+      : "—"}
+  </p>
+</td>
 
-                      </td>
+
                       <td className="py-4 px-4">{getStatusBadge(txn.status)}</td>
                       <td className="py-4 px-4">
                         <p className="text-sm text-foreground">
@@ -358,10 +360,26 @@ const AdminTransactions = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Purchase Date</p>
-                      <p className="font-medium text-foreground">
-                        {new Date(selectedTransaction.purchaseDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </p>
+
+                      {(() => {
+                        const purchaseDate =
+                          selectedTransaction.purchaseDate ||
+                          selectedTransaction.createdAt;
+
+                        return (
+                          <p className="font-medium text-foreground">
+                            {purchaseDate
+                              ? new Date(purchaseDate).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                              : "—"}
+                          </p>
+                        );
+                      })()}
                     </div>
+
                     <div>
                       <p className="text-sm text-muted-foreground">Expiry Date</p>
                       <p className="font-medium text-foreground">
@@ -379,13 +397,17 @@ const AdminTransactions = () => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Events Usage</p>
-                      <p className="font-medium text-foreground">
-                        {(selectedTransaction.eventsUsed ?? 0)} /{" "}
-                        {selectedTransaction.eventsAllowed === 999
-                          ? "Unlimited"
-                          : selectedTransaction.eventsAllowed ?? 0}
+                    <p className="font-medium text-foreground">
+  {selectedTransaction.eventsAllowed > 0
+    ? `${selectedTransaction.eventsUsed ?? 0} / ${
+        selectedTransaction.eventsAllowed === 999
+          ? "Unlimited"
+          : selectedTransaction.eventsAllowed
+      }`
+    : "—"}
+</p>
 
-                      </p>
+
                     </div>
                   </div>
                 </div>
@@ -397,25 +419,33 @@ const AdminTransactions = () => {
                       <span className="text-muted-foreground">Events Used</span>
                       <span className="text-foreground">
                         {(() => {
-                          const used = selectedTransaction.eventsUsed || 0;
-                          const allowed = selectedTransaction.eventsAllowed || 0;
+                          const used = selectedTransaction.eventsUsed ?? 0;
+                          const allowed = selectedTransaction.eventsAllowed;
 
-                          if (allowed === 0 || allowed === 999) return "—";
+                          if (!allowed || allowed === 999) return "—";
 
                           return `${Math.round((used / allowed) * 100)}%`;
+
                         })()}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
-                        style={{
-                          width:
-                            selectedTransaction.eventsAllowed > 0 &&
-                              selectedTransaction.eventsAllowed !== 999
-                              ? `${(selectedTransaction.eventsUsed / selectedTransaction.eventsAllowed) * 100}%`
-                              : "0%",
-                        }}
+                      style={{
+  width:
+    selectedTransaction.eventsAllowed > 0 &&
+    selectedTransaction.eventsAllowed !== 999 &&
+    selectedTransaction.eventsUsed >= 0
+      ? `${Math.min(
+          100,
+          (selectedTransaction.eventsUsed /
+            selectedTransaction.eventsAllowed) *
+            100
+        )}%`
+      : "0%",
+}}
+
                       />
                     </div>
                   </div>

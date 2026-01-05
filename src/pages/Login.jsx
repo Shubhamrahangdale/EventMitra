@@ -76,7 +76,7 @@ navigate(from, { replace: true });
 
 // Redirect
 if (result.user.role === "attendee") {
-  window.location.href = "/profile";
+  window.location.href = "/";
 } else if (result.user.role === "organizer") {
   window.location.href = "/organizer";
 }
