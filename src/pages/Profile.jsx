@@ -65,7 +65,7 @@ const Profile = () => {
   }, [user]);
 
 
-    if (!user) {
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -82,7 +82,7 @@ const Profile = () => {
     );
   }
 
-  
+
 
   // Demo saved events
   const savedEvents = [
@@ -365,12 +365,12 @@ const Profile = () => {
                               {ticket.status}
                             </Badge>
                             <Button
-  variant="outline"
-  size="sm"
-  onClick={() => setSelectedTicket(ticket)}
->
-  View Ticket
-</Button>
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedTicket(ticket)}
+                            >
+                              View Ticket
+                            </Button>
 
                           </div>
                         </div>
@@ -444,45 +444,45 @@ const Profile = () => {
       </main>
 
       {/* ticket priew  */}
-{selectedTicket && (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-    
-    {/* Scroll container */}
-    <div className="relative bg-background rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
+      {selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
 
-      {/* Sticky Close Button */}
-      <button
-        onClick={() => setSelectedTicket(null)}
-        className="sticky top-0 ml-auto block text-xl font-bold z-50"
-      >
-        ✕
-      </button>
+          {/* Scroll container */}
+          <div className="relative bg-background rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
 
-      <TicketCard
-        bookingId={selectedTicket.bookingId}
-        event={{
-          name: selectedTicket.eventTitle,
-          date: selectedTicket.eventId?.date,
-          time: selectedTicket.eventId?.time,
-          venue: selectedTicket.eventId?.location,
-          imageUrl: selectedTicket.eventId?.image,
-        }}
-        attendees={selectedTicket.attendees.map((a, i) => ({
-          name: a.name,
-          age: a.age,
-          gender: a.gender,
-          phone: a.phone,
-          ticketNumber: i + 1,
-        }))}
-        payment={{
-          pricePerTicket: selectedTicket.pricePerTicket,
-          numberOfTickets: selectedTicket.ticketCount,
-          totalPaid: selectedTicket.totalAmount,
-        }}
-      />
-    </div>
-  </div>
-)}
+            {/* Sticky Close Button */}
+            <button
+              onClick={() => setSelectedTicket(null)}
+              className="sticky top-0 ml-auto block text-xl font-bold z-50"
+            >
+              ✕
+            </button>
+            <TicketCard
+              bookingId={selectedTicket.bookingId}
+              event={{
+                name: selectedTicket.eventTitle,
+                date: selectedTicket.eventId?.date,
+                time: selectedTicket.eventId?.time,
+                venue: selectedTicket.eventId?.location,
+                imageUrl: selectedTicket.eventId?.image,
+              }}
+              attendees={selectedTicket.attendees.map((a, i) => ({
+                name: a.name,
+                age: a.age,
+                gender: a.gender,
+                phone: a.phone,
+                ticketNumber: i + 1,
+              }))}
+              payment={{
+                pricePerTicket: selectedTicket.eventId?.price,
+                numberOfTickets: selectedTicket.ticketCount,
+                totalPaid: selectedTicket.totalAmount,
+              }}
+              paymentId={selectedTicket.payment?.razorpayPaymentId}
+            />
+          </div>
+        </div>
+      )}
 
 
 

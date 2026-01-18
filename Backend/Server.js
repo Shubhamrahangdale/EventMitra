@@ -15,6 +15,7 @@ import adminAuth from "./middleware/adminAuth.js";
 import authRoutes from "./routes/AuthRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import adminSubscriptionRoutes from "./routes/adminSubscriptionRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 
 const app = express();
@@ -283,6 +284,10 @@ app.use("/api/subscriptions", subscriptionRoutes);
 /* ================= AdminSubscription ROUTES ================= */
 
 app.use("/api/subscriptions", adminSubscriptionRoutes);
+
+/* ================= PAYMENT ROUTES ================= */
+
+app.use("/api/payment", paymentRoutes);
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () =>

@@ -1,7 +1,14 @@
 import { QRCodeSVG } from "qrcode.react";
-import { Calendar, Clock, MapPin, User } from "lucide-react";
+import { Calendar, Clock, MapPin, User, CheckCircle2 } from "lucide-react";
 
-export const TicketCard = ({ bookingId, event, attendees, payment }) => {
+export const TicketCard = ({
+  bookingId,
+  event,
+  attendees,
+  payment,
+  paymentId,
+}) => {
+
   return (
     <div className="w-full max-w-2xl mx-auto bg-card rounded-lg shadow-card overflow-hidden">
 
@@ -109,6 +116,22 @@ export const TicketCard = ({ bookingId, event, attendees, payment }) => {
       {/* Payment */}
       <div className="px-6 py-5">
         <h4 className="font-semibold mb-3">Payment Summary</h4>
+
+        {paymentId && (
+          <div className="mb-4 flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              Payment Successful
+            </span>
+
+            <span className="text-xs text-muted-foreground">
+              Transaction ID:
+              <span className="ml-1 font-medium tracking-wide">
+                {paymentId}
+              </span>
+            </span>
+          </div>
+        )}
 
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

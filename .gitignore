@@ -25,3 +25,6 @@ dist-ssr
 
 Backend/.env
 !Backend/.env_sample
+
+.env
+.env_sample

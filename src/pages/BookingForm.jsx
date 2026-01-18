@@ -15,6 +15,18 @@ import {
 import { ArrowLeft, Calendar, MapPin, Clock, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+//RazorPay 
+const loadRazorpay = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+
 //EVENTS
 const BookingForm = () => {
   const { id } = useParams();
@@ -92,75 +104,156 @@ if (!event) {
     updated[index][field] = value;
     setAttendees(updated);
   };
-
+  
 const handleSubmit = async (e) => {
   e.preventDefault();
 
-    for (let i = 0; i < attendees.length; i++) {
-  const attendee = attendees[i];
+  // 1️⃣ Attendee validation
+  for (let i = 0; i < attendees.length; i++) {
+    const a = attendees[i];
 
-  if (!attendee.name || !attendee.age || !attendee.phone || !attendee.gender) {
-    toast({
-      title: "Missing Information",
-      description: `Please fill all details for Attendee ${i + 1}`,
-      variant: "destructive",
-    });
-    return;
-  }
-
-  if (!/^\d{10}$/.test(attendee.phone)) {
-    toast({
-      title: "Invalid Phone Number",
-      description: `Attendee ${i + 1} phone number must be exactly 10 digits`,
-      variant: "destructive",
-    });
-    return;
-  }
-}
-
-  try {
-    const res = await fetch("http://localhost:2511/api/bookings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({
-        eventId: event._id,
-        attendees,
-        ticketCount,
-        totalAmount: (event.price || 0) * ticketCount,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
+    if (!a.name || !a.age || !a.phone || !a.gender) {
       toast({
-        title: "Error",
-        description: data.message || "Booking failed",
+        title: "Missing Information",
+        description: `Please fill all details for Attendee ${i + 1}`,
         variant: "destructive",
       });
       return;
     }
 
-    // ✅ Navigate only after DB success
+    if (!/^\d{10}$/.test(a.phone)) {
+      toast({
+        title: "Invalid Phone Number",
+        description: `Attendee ${i + 1} phone number must be exactly 10 digits`,
+        variant: "destructive",
+      });
+      return;
+    }
+  }
+
+  // 2️⃣ Token check
+  const token = localStorage.getItem("token");
+  if (!token) {
+    toast({
+      title: "Login required",
+      description: "Please login to continue booking",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  // =========================
+  // 🆓 FREE EVENT
+  // =========================
+  if (event.price === 0) {
+    const res = await fetch("http://localhost:2511/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        eventId: event._id,
+        attendees,
+        ticketCount,
+        totalAmount: 0,
+      }),
+    });
+
+    const data = await res.json();
+
     navigate("/booking/confirmation", {
       state: {
         bookingId: data.bookingId,
         event,
         attendees,
         ticketCount,
-        totalAmount: data.totalAmount,
+        totalAmount: 0,
+        paymentStatus: "Free",
       },
     });
-  } catch (error) {
+
+    return;
+  }
+
+  // =========================
+  // 💳 PAID EVENT (RAZORPAY)
+  // =========================
+  const loaded = await loadRazorpay();
+  if (!loaded) {
     toast({
-      title: "Server Error",
-      description: "Unable to complete booking",
+      title: "Error",
+      description: "Razorpay failed to load",
       variant: "destructive",
     });
+    return;
   }
+
+  // Create Razorpay order
+  const orderRes = await fetch(
+    "http://localhost:2511/api/payment/create-order",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: event.price * ticketCount,
+      }),
+    }
+  );
+
+  const order = await orderRes.json();
+
+  const options = {
+    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+    amount: order.amount,
+    currency: "INR",
+    name: "EventMitra",
+    description: event.title,
+    order_id: order.id,
+
+    handler: async function (response) {
+      // Save booking after payment success
+      const bookingRes = await fetch("http://localhost:2511/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          eventId: event._id,
+          attendees,
+          ticketCount,
+          totalAmount: event.price * ticketCount,
+          payment: {
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          },
+        }),
+      });
+
+      const data = await bookingRes.json();
+
+      navigate("/booking/confirmation", {
+        state: {
+          bookingId: data.bookingId,
+          event,
+          attendees,
+          ticketCount,
+          totalAmount: data.totalAmount,
+
+          // 🔥 यही line badge + transaction ID दिखाएगी
+          paymentId: response.razorpay_payment_id,
+          paymentStatus: "Paid",
+        },
+      });
+    },
+
+    theme: { color: "#ff7a18" },
+  };
+
+  const rzp = new window.Razorpay(options);
+  rzp.open();
 };
 
 
@@ -296,7 +389,7 @@ const handleSubmit = async (e) => {
 
                 {/* Submit Button */}
                 <Button type="submit" size="lg" className="w-full">
-                  Proceed to Confirmation
+                  Proceed to Payment
                 </Button>
               </form>
             </div>
