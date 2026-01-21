@@ -7,11 +7,17 @@ import { Calendar, Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, CheckCircle
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-//-------------------------------------------1----------------------------------
 import { sendOtp, verifyOtp } from "@/lib/utils";
 
-
-//-------------------------------------------1----------------------------------
+const checkPasswordRules = (password) => {
+  return {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[@$!%*?&#]/.test(password),
+  };
+};
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -26,9 +32,18 @@ const Register = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [rules, setRules] = useState({
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false,
+  });
+
+
   const [otp, setOtp] = useState("");
-const [otpSent, setOtpSent] = useState(false);
-const [otpVerified, setOtpVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -74,8 +89,8 @@ const [otpVerified, setOtpVerified] = useState(false);
     e.preventDefault();
 
     if (!validateForm()) {
-  return;
-}
+      return;
+    }
 
     if (!formData.name || !formData.email || !formData.password) {
       toast({
@@ -90,6 +105,16 @@ const [otpVerified, setOtpVerified] = useState(false);
       toast({
         title: "Passwords don't match",
         description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const allValid = Object.values(rules).every(Boolean);
+    if (!allValid) {
+      toast({
+        title: "Weak Password ❌",
+        description: "Password does not meet security rules",
         variant: "destructive",
       });
       return;
@@ -126,21 +151,21 @@ const [otpVerified, setOtpVerified] = useState(false);
 
     try {
       const response = await fetch(
-  "http://localhost:2511/api/auth/register",
-  {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      password: formData.password,
-      role: userType, 
-    }),
-  }
-);
+        "http://localhost:2511/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: userType,
+          }),
+        }
+      );
 
-   
+
 
       const result = await response.json();
 
@@ -367,10 +392,14 @@ const [otpVerified, setOtpVerified] = useState(false);
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   value={formData.password}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    setRules(checkPasswordRules(e.target.value));
+                  }}
                   className="pl-11 pr-11 h-12"
                   required
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -382,13 +411,24 @@ const [otpVerified, setOtpVerified] = useState(false);
               <p className="text-xs text-muted-foreground mt-2">
                 Password must contain:
               </p>
-              <ul className="text-xs text-muted-foreground list-disc list-inside space-y-1">
-                <li>Minimum 8 characters</li>
-                <li>One uppercase letter (A–Z)</li>
-                <li>One lowercase letter (a–z)</li>
-                <li>One number (0–9)</li>
-                <li>One special character (@$!%*?&#)</li>
+              <ul className="text-xs list-disc list-inside space-y-1">
+                <li className={rules.length ? "text-green-500" : "text-muted-foreground"}>
+                  Minimum 8 characters
+                </li>
+                <li className={rules.upper ? "text-green-500" : "text-muted-foreground"}>
+                  One uppercase letter (A–Z)
+                </li>
+                <li className={rules.lower ? "text-green-500" : "text-muted-foreground"}>
+                  One lowercase letter (a–z)
+                </li>
+                <li className={rules.number ? "text-green-500" : "text-muted-foreground"}>
+                  One number (0–9)
+                </li>
+                <li className={rules.special ? "text-green-500" : "text-muted-foreground"}>
+                  One special character (@$!%*?&#)
+                </li>
               </ul>
+
             </div>
 
             <div className="space-y-2">
@@ -418,9 +458,10 @@ const [otpVerified, setOtpVerified] = useState(false);
               />
               <label htmlFor="terms" className="text-sm text-muted-foreground">
                 I agree to the{" "}
-                <Link to="#" className="text-primary hover:underline">Terms of Service</Link>
+                <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
                 {" "}and{" "}
-                <Link to="#" className="text-primary hover:underline">Privacy Policy</Link>
+                <Link to="/terms" className="text-primary hover:underline">Privacy Policy</Link>
+
               </label>
             </div>
 

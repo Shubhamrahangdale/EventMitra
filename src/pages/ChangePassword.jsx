@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,9 @@ const isStrongPassword = (password) => {
   return { length, upper, lower, number, special };
 };
 
-const ResetPassword = () => {
+const ChangePassword = () => {
   const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +28,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  /* password rules */
   const [rules, setRules] = useState({
     length: false,
     upper: false,
@@ -36,18 +38,12 @@ const ResetPassword = () => {
   });
 
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (location.state?.email) {
-      setEmail(location.state.email);
-    }
-  }, [location.state]);
+  const token = localStorage.getItem("token");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password || !confirmPassword) {
+    if (!email || !currentPassword || !password || !confirmPassword) {
       toast({
         title: "Missing fields",
         description: "Please fill all fields.",
@@ -68,7 +64,7 @@ const ResetPassword = () => {
     if (!allValid) {
       toast({
         title: "Weak password",
-        description: "Password does not meet security rules.",
+        description: "Password does not meet requirements.",
         variant: "destructive",
       });
       return;
@@ -77,11 +73,15 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:2511/api/auth/reset-password", {
+      const res = await fetch("http://localhost:2511/api/auth/change-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           email,
+          currentPassword,
           newPassword: password,
         }),
       });
@@ -91,11 +91,11 @@ const ResetPassword = () => {
 
       setIsSuccess(true);
       toast({
-        title: "Password Reset Successful",
-        description: "You can now login with your new password.",
+        title: "Password Changed",
+        description: "Your password was updated successfully.",
       });
 
-      setTimeout(() => navigate("/login"), 3000);
+      setTimeout(() => navigate("/profile"), 2000);
     } catch (err) {
       toast({
         title: "Error",
@@ -122,12 +122,12 @@ const ResetPassword = () => {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="font-display text-2xl">
-              {isSuccess ? "Password Reset!" : "Set New Password"}
+              {isSuccess ? "Password Changed!" : "Change Password"}
             </CardTitle>
             <CardDescription>
               {isSuccess
                 ? "Your password has been updated successfully."
-                : "Enter your new password below."}
+                : "Enter your current and new password."}
             </CardDescription>
           </CardHeader>
 
@@ -138,17 +138,25 @@ const ResetPassword = () => {
                   <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Redirecting to login...
+                  Redirecting to profile...
                 </p>
-                <Button asChild className="w-full">
-                  <Link to="/login">Go to Login</Link>
-                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <Input value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Current Password</Label>
+                  <Input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -174,7 +182,7 @@ const ResetPassword = () => {
                     </button>
                   </div>
 
-                  {/* live rules */}
+                  {/* password rules */}
                   <div className="text-sm space-y-1">
                     <p className={rules.length ? "text-green-500" : "text-muted-foreground"}>• 8 characters</p>
                     <p className={rules.upper ? "text-green-500" : "text-muted-foreground"}>• Uppercase</p>
@@ -186,27 +194,16 @@ const ResetPassword = () => {
 
                 <div className="space-y-2">
                   <Label>Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-11 pr-11 h-12"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showConfirmPassword ? <EyeOff /> : <Eye />}
-                    </button>
-                  </div>
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Updating..." : "Reset Password"}
+                  {isLoading ? "Updating..." : "Change Password"}
                 </Button>
               </form>
             )}
@@ -217,4 +214,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default ChangePassword;

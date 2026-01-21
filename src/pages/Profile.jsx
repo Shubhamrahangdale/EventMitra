@@ -465,9 +465,17 @@ const Profile = () => {
                           Update your account password
                         </p>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          navigate("/change-password", { state: { email: user.email } })
+                        }
+                      >
                         Change
                       </Button>
+
+
                     </div>
 
                     <Separator />

@@ -1,24 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import Razorpay from "razorpay";
+
 import crypto from "crypto";
 import Subscription from "../models/Subscription.js";
 import Organizer from "../models/Organizer.js";
+import razorpay from "../services/razorpay.js";
 
-let razorpay;
-
-/* ================================
-   🔐 Razorpay Initialization
-================================ */
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
-} else {
-  console.error("❌ Razorpay keys missing in .env");
-}
 
 /* ================================
    🧾 CREATE ORDER

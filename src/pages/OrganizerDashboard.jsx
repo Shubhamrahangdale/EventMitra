@@ -29,6 +29,25 @@ import {
   Sparkles,
   CheckCircle,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import {
+  Users,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  User,
+  Mail,
+  Phone,
+  Hash,
+} from "lucide-react";
 
 
 
@@ -72,8 +91,43 @@ const OrganizerDashboard = () => {
 
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showAttendeesModal, setShowAttendeesModal] = useState(false);
+  const [selectedEventForAttendees, setSelectedEventForAttendees] = useState(null);
+  const [attendees, setAttendees] = useState([]);
+  const [attendeeSearchQuery, setAttendeeSearchQuery] = useState("");
+const [expandedAttendees, setExpandedAttendees] = useState({});
 
 
+  const handleMobileNavClick = (tabId) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleViewAttendees = async (event) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(
+        `http://localhost:2511/api/bookings/event/${event._id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      setAttendees(data);
+      setSelectedEventForAttendees(event);
+      setShowAttendeesModal(true);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to load attendees",
+        variant: "destructive",
+      });
+    }
+  };
   const subscriptionPlans = [
     {
       id: "basic",
@@ -143,6 +197,7 @@ const OrganizerDashboard = () => {
               }),
             }
           );
+
 
           const verifyData = await verifyRes.json();
           if (!verifyRes.ok) throw new Error(verifyData.message);
@@ -522,9 +577,103 @@ const OrganizerDashboard = () => {
     draft: events.filter(e => e.status === "draft").length,
   };
 
+  const toggleAttendeeDetails = (id) => {
+  setExpandedAttendees(prev => ({
+    ...prev,
+    [id]: !prev[id],
+  }));
+};
+
+const getEventAttendees = () => {
+  return attendees.map((a, index) => ({
+    id: index + "-" + a.email,
+    name: a.name,
+    email: a.email,
+    phone: a.phone,
+    quantity: a.quantity || 1,
+    status: "confirmed",
+    ticketNumber: "EVT-" + Math.floor(100000 + Math.random() * 900000),
+    bookedAt: new Date().toLocaleDateString(),
+    ticketHolders: [
+      { name: a.name, age: a.age, gender: a.gender }
+    ]
+  }));
+};
+
+const downloadAttendeesPDF = () => {
+  toast({
+    title: "Download Started",
+    description: "PDF download feature coming soon",
+  });
+};
+
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border h-16 flex items-center justify-between px-4">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shadow-md">
+            <Calendar className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <span className="font-display text-lg font-bold text-foreground">
+            Event<span className="text-primary">Mitra</span>
+          </span>
+        </Link>
+
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="w-6 h-6" />
+            </Button>
+          </SheetTrigger>
+
+          <SheetContent side="left" className="w-64 p-0 bg-card border-border">
+            <div className="h-full flex flex-col">
+              <div className="p-6 border-b border-border">
+                <Link to="/" className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-md">
+                    <Calendar className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <span className="font-display text-xl font-bold text-foreground">
+                    Event<span className="text-primary">Mitra</span>
+                  </span>
+                </Link>
+              </div>
+
+              <nav className="flex-1 p-4">
+                <ul className="space-y-2">
+                  {sidebarItems.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        onClick={() => handleMobileNavClick(item.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === item.id
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        {item.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="p-4 border-t border-border">
+                <Link to="/">
+                  <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground">
+                    <LogOut className="w-5 h-5" />
+                    Back to Home
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </header>
+
       <aside className="w-64 bg-card border-r border-border hidden md:flex flex-col">
         <div className="p-6 border-b border-border">
           <Link to="/" className="flex items-center gap-2">
@@ -567,7 +716,8 @@ const OrganizerDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pt-16 md:pt-0">
+
         {/* Header */}
         <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
@@ -805,6 +955,16 @@ const OrganizerDashboard = () => {
                                   View
                                 </Button>
                               </Link>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewAttendees(event)}
+                                className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                              >
+                                Attendees
+                              </Button>
+
+
                               <Button
                                 variant="destructive"
                                 size="sm"
@@ -1070,7 +1230,7 @@ const OrganizerDashboard = () => {
                 </Card>
               )}
             </div>
-          )} 
+          )}
         </div>
       </main>
 
@@ -1302,9 +1462,258 @@ const OrganizerDashboard = () => {
           </div>
         </div>
       )}
+      {/* View Attendees Modal */}
+      <Dialog open={showAttendeesModal} onOpenChange={setShowAttendeesModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="font-display text-xl flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Attendees for {selectedEventForAttendees?.title}
+            </DialogTitle>
+            
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-auto">
+            {selectedEventForAttendees && (
+              <>
+                {/* Event Summary */}
+                <div className="bg-muted/50 rounded-lg p-4 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Date</p>
+                      <p className="font-medium text-foreground">{selectedEventForAttendees.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Location</p>
+                      <p className="font-medium text-foreground">{selectedEventForAttendees.location}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Tickets Sold</p>
+                      <p className="font-medium text-foreground">{selectedEventForAttendees.soldTickets} / {selectedEventForAttendees.totalTickets}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Revenue</p>
+                      <p className="font-medium text-primary">₹{(selectedEventForAttendees.soldTickets * selectedEventForAttendees.price).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search attendees by name..."
+                      value={attendeeSearchQuery}
+                      onChange={(e) => setAttendeeSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                    <Users className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  </div>
+                </div>
+
+                {/* Attendees List */}
+                {getEventAttendees(selectedEventForAttendees.id).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="font-display text-lg font-semibold text-foreground mb-2">No Attendees Yet</h3>
+                    <p className="text-muted-foreground">No one has booked tickets for this event yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(() => {
+                      const allAttendees = getEventAttendees(selectedEventForAttendees.id);
+                      const filteredAttendees = attendeeSearchQuery.trim() 
+                        ? allAttendees.filter(a => 
+                            a.name.toLowerCase().includes(attendeeSearchQuery.toLowerCase()) ||
+                            a.ticketHolders?.some(h => h.name.toLowerCase().includes(attendeeSearchQuery.toLowerCase()))
+                          )
+                        : allAttendees;
+                      
+                      return (
+                        <>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            {filteredAttendees.length} booking(s) • 
+                            {filteredAttendees.reduce((acc, a) => acc + a.quantity, 0)} total tickets
+                            {attendeeSearchQuery && ` (filtered from ${allAttendees.length})`}
+                          </div>
+                          {filteredAttendees.length === 0 ? (
+                            <div className="text-center py-8">
+                              <p className="text-muted-foreground">No attendees found matching "{attendeeSearchQuery}"</p>
+                            </div>
+                          ) : (
+                            filteredAttendees.map((attendee) => {
+                              const totalAmount = attendee.quantity * selectedEventForAttendees.price;
+                              const hasMultipleTickets = attendee.quantity > 1;
+                              const isExpanded = expandedAttendees[attendee.id];
+                              
+                              return (
+                                <div 
+                                  key={attendee.id} 
+                                  className="bg-card border border-border rounded-lg overflow-hidden transition-shadow"
+                                >
+                                  {/* Compact Header - Always visible */}
+                                  <div 
+                                    className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                                    onClick={() => toggleAttendeeDetails(attendee.id)}
+                                  >
+                                    <div className="flex items-center justify-between gap-4">
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
+                                          <User className="w-5 h-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <h4 className="font-semibold text-foreground">{attendee.name}</h4>
+                                            {hasMultipleTickets && (
+                                              <Badge className="bg-muted text-foreground border-border text-xs">
+                                                <Ticket className="w-3 h-3 mr-1" />
+                                                {attendee.quantity} Tickets
+                                              </Badge>
+                                            )}
+                                            <Badge 
+                                              variant={attendee.status === "confirmed" ? "default" : "secondary"}
+                                              className={`text-xs ${attendee.status === "confirmed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                                            >
+                                              {attendee.status}
+                                            </Badge>
+                                          </div>
+                                          <p className="text-sm text-muted-foreground truncate">{attendee.email}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-right hidden sm:block">
+                                          <p className="text-xs text-muted-foreground">Total</p>
+                                          <p className="font-bold text-foreground">
+                                            ₹{totalAmount.toLocaleString()}
+                                          </p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                          {isExpanded ? (
+                                            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                                          ) : (
+                                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                          {/* Expanded Details */}
+                          {isExpanded && (
+                            <div className="border-t border-border bg-muted/30 p-4 animate-fade-in">
+                              {/* Ticket Holders Section - Main Focus */}
+                              <div className="mb-4">
+                                <h5 className="font-medium text-foreground text-sm flex items-center gap-2 mb-3">
+                                  <Users className="w-4 h-4 text-primary" />
+                                  Ticket Holders ({attendee.ticketHolders?.length || 0})
+                                </h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {attendee.ticketHolders?.map((holder, index) => (
+                                    <div 
+                                      key={index} 
+                                      className="bg-card border border-border rounded-lg p-3 flex items-center gap-3"
+                                    >
+                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-primary font-bold text-sm">{index + 1}</span>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-foreground text-sm truncate">{holder.name}</p>
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                          <span>{holder.age} yrs</span>
+                                          <span>•</span>
+                                          <span>{holder.gender}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-border">
+                                {/* Booking Contact Information */}
+                                <div className="space-y-3">
+                                  <h5 className="font-medium text-foreground text-sm flex items-center gap-2">
+                                    <User className="w-4 h-4 text-primary" />
+                                    Booking Contact
+                                  </h5>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Mail className="w-4 h-4" />
+                                      <span>{attendee.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Phone className="w-4 h-4" />
+                                      <span>{attendee.phone}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Ticket Information */}
+                                <div className="space-y-3">
+                                  <h5 className="font-medium text-foreground text-sm flex items-center gap-2">
+                                    <Ticket className="w-4 h-4 text-primary" />
+                                    Booking Details
+                                  </h5>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Hash className="w-4 h-4" />
+                                      <span className="font-mono">{attendee.ticketNumber}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                      <Calendar className="w-4 h-4" />
+                                      <span>Booked on {attendee.bookedAt}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Payment Summary */}
+                              <div className="mt-4 pt-4 border-t border-border">
+                                <h5 className="font-medium text-foreground text-sm flex items-center gap-2 mb-3">
+                                  <CreditCard className="w-4 h-4 text-primary" />
+                                  Payment Summary
+                                </h5>
+                                <div className="bg-card rounded-lg p-3 border border-border">
+                                  <div className="grid grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                      <p className="text-muted-foreground text-xs">Quantity</p>
+                                      <p className="font-semibold text-foreground">
+                                        {attendee.quantity} {attendee.quantity > 1 ? 'tickets' : 'ticket'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground text-xs">Price per Ticket</p>
+                                      <p className="font-medium text-foreground">₹{selectedEventForAttendees.price.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground text-xs">Total Paid</p>
+                                      <p className="font-bold text-lg text-foreground">
+                                        ₹{totalAmount.toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
-
 
 export default OrganizerDashboard;

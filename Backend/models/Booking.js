@@ -25,12 +25,13 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Attendee user
+      ref: "Attendee",
       required: true,
     },
+
 
     attendees: [attendeeSchema],
 
@@ -43,7 +44,7 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-     payment: {
+    payment: {
       razorpayOrderId: String,
       razorpayPaymentId: String,
       razorpaySignature: String,

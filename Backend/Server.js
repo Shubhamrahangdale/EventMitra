@@ -2,10 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-// dotenv.config();
-
-dotenv.config({ path: "./.env"});
-
+dotenv.config();
 import eventRoutes from "./routes/eventRoutes.js";
 import bookingRoutes from "./routes/BookingRoutes.js";
 import contactRoutes from "./routes/ContactRoutes.js";
@@ -14,9 +11,10 @@ import authRoutes from "./routes/AuthRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import adminSubscriptionRoutes from "./routes/adminSubscriptionRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-// import expireOldEvents from "./utils/expireEvents.js";
 import adminRoutes from "./routes/adminRoutes.js";
-import profileRoutes from "./routes/profileRoutes.js";  
+import profileRoutes from "./routes/profileRoutes.js"; 
+import attendeeRoutes from "./routes/attendees.routes.js";
+ 
 
 
 const app = express();
@@ -37,14 +35,6 @@ console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "LOADED" : "NOT LOADED");
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected ✔"))
   .catch(() => console.log("MongoDB Error ❌"));
-// mongoose.connect(MONGO_URI)
-//   .then(() => {
-//     console.log("MongoDB Connected ✔");
-//     expireOldEvents();
-//     setInterval(expireOldEvents, 60 * 60 * 1000);
-//   })
-//   .catch(() => console.log("MongoDB Error ❌"));
-
 
 
 /* ================= EVENT ROUTES ================= */
@@ -85,6 +75,11 @@ app.use("/api/subscriptions", adminSubscriptionRoutes);
 /* ================= PAYMENT ROUTES ================= */
 
 app.use("/api/payment", paymentRoutes);
+
+/* ================= Attendees ROUTES ================= */
+
+app.use("/api/bookings", attendeeRoutes);
+
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () =>

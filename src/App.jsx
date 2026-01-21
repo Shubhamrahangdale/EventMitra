@@ -34,6 +34,11 @@ import { AdminProvider } from "@/context/AdminContext";
 import { OrganiserProvider } from "@/context/OrganiserContext";
 import { EventProvider } from "@/context/EventContext";
 import RegisterSuccess from "@/pages/RegisterSuccess";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
+import TermsNCondition from "./pages/TermsNCondition";
+
 
 
 const App = () => {
@@ -62,6 +67,11 @@ const App = () => {
                   <Route path="/organizer" element={<OrganizerDashboard />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/events/:id/book" element={<BookingForm />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/change-password" element={<ChangePassword />} />
+                  <Route path="/terms" element={<TermsNCondition />} />
+<Route path="/reset-password" element={<ResetPassword />} />
+
                   <Route
                     path="/booking/confirmation"
                     element={<BookingConfirmation />}
