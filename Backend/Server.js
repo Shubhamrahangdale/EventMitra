@@ -2,7 +2,9 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-dotenv.config();
+// dotenv.config();
+
+dotenv.config({ path: "./.env"});
 
 import eventRoutes from "./routes/eventRoutes.js";
 import bookingRoutes from "./routes/BookingRoutes.js";

@@ -56,8 +56,11 @@ export const createOrder = async (req, res) => {
       plan: planId,
     });
   } catch (err) {
-    console.error("CREATE ORDER ERROR:", err);
-    res.status(500).json({ message: "Order creation failed" });
+    console.error("RAZORPAY FULL ERROR:", err?.error || err?.response || err);
+  res.status(500).json({
+    message: "Order creation failed",
+    razorpay: err?.error || err?.message,
+  });
   }
 };
 
