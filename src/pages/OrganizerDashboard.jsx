@@ -1069,7 +1069,7 @@ const downloadAttendeesPDF = () => {
                           <IndianRupee className="w-6 h-6 text-green-600" />
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2">Per year</p>
+                      <p className="text-sm text-muted-foreground mt-2">Per Month</p>
                     </CardContent>
                   </Card>
 
@@ -1146,7 +1146,7 @@ const downloadAttendeesPDF = () => {
                         <h3 className="font-display text-lg font-semibold text-foreground mb-2">{plan.name}</h3>
                         <p className="text-3xl font-bold text-foreground mb-1">
                           ₹{plan.price.toLocaleString()}
-                          <span className="text-sm font-normal text-muted-foreground">/year</span>
+                          <span className="text-sm font-normal text-muted-foreground">/Month</span>
                         </p>
                         <p className="text-muted-foreground text-sm mb-4">
                           {plan.events === 'Unlimited' ? 'Unlimited events' : `Up to ${plan.events} events`}
@@ -1424,7 +1424,7 @@ const downloadAttendeesPDF = () => {
                   <Crown className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-display text-2xl font-bold text-foreground">{selectedPlan.name}</h3>
-                <p className="text-3xl font-bold text-primary mt-2">₹{selectedPlan.price.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/year</span></p>
+                <p className="text-3xl font-bold text-primary mt-2">₹{selectedPlan.price.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/Month</span></p>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-4 space-y-3">
@@ -1434,7 +1434,7 @@ const downloadAttendeesPDF = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Validity</span>
-                  <span className="font-medium text-foreground">1 Year</span>
+                  <span className="font-medium text-foreground">1 Month</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Support</span>

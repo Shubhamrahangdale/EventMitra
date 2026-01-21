@@ -38,8 +38,10 @@ mongoose.connect(MONGO_URI)
 
 
 /* ================= EVENT ROUTES ================= */
+
 app.use("/admin", adminRoutes);
 /* ================= EVENT ROUTES ================= */
+
 app.use("/api/profile", profileRoutes);
 
 /* ================= EVENT ROUTES ================= */
