@@ -1,8 +1,8 @@
 import Organizer from "../models/Organizer.js";
 
-/* =========================
-   GET LOGGED-IN ORGANIZER
-========================= */
+
+  //  GET LOGGED-IN ORGANIZER
+
 export const getMe = async (req, res) => {
   try {
     const organiser = await Organizer.findById(req.user.id).select("-password");
@@ -17,9 +17,9 @@ export const getMe = async (req, res) => {
   }
 };
 
-/* =========================
-   ADMIN CONTROLLERS
-========================= */
+
+  //  ADMIN CONTROLLERS
+
 export const subscription = async (req, res) => {
   try {
     const { plan, status, amount, eventsAllowed } = req.body;

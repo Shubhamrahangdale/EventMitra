@@ -10,14 +10,10 @@ import {
 
 const router = express.Router();
 
-/* =========================
-   ORGANIZER ROUTES
-========================= */
+// ORGANIZER ROUTES
 router.get("/me", auth, getMe);
 
-/* =========================
-   ADMIN ROUTES
-========================= */
+// ADMIN ROUTES
 router.put("/admin/organisers/:id/subscription", adminAuth, subscription);
 router.get("/admin/organisers/all", adminAuth, findOrganizer);
 router.get("/admin/organisers/pending", adminAuth, pendingOrganizer);

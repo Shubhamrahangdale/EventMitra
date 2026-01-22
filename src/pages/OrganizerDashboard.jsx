@@ -84,7 +84,7 @@ const OrganizerDashboard = () => {
   const canCreateEvent =
     subscription.status === "active" &&
     (
-      subscription.eventsAllowed === 999 || // Unlimited plan
+      subscription.eventsAllowed === 999 || 
       subscription.eventsUsed < subscription.eventsAllowed
     );
 

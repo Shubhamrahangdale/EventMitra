@@ -8,9 +8,9 @@ import Organizer from "../models/Organizer.js";
 import razorpay from "../services/razorpay.js";
 
 
-/* ================================
-   🧾 CREATE ORDER
-================================ */
+
+  //   CREATE ORDER
+
 export const createOrder = async (req, res) => {
   try {
     if (!razorpay) {
@@ -64,9 +64,9 @@ export const createOrder = async (req, res) => {
   }
 };
 
-/* ================================
-   ✅ VERIFY PAYMENT
-================================ */
+
+  //   VERIFY PAYMENT
+
 export const verifyPayment = async (req, res) => {
   try {
     const {
@@ -76,7 +76,7 @@ export const verifyPayment = async (req, res) => {
       plan,
     } = req.body;
 
-    /* 🔐 Signature Verification */
+    /*  Signature Verification */
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
 
     const expectedSignature = crypto
@@ -88,7 +88,7 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Invalid payment signature" });
     }
 
-    /* 💰 Amount & Event Limits */
+    /*  Amount & Event Limits */
     const amount =
       plan === "basic" ? 4999 :
       plan === "pro" ? 9999 :
@@ -99,7 +99,7 @@ export const verifyPayment = async (req, res) => {
       plan === "pro" ? 20 :
       999;
 
-    /* 🧾 Save Subscription History (Admin / Audit) */
+    /*  Save Subscription History (Admin / Audit) */
     const subscription = await Subscription.create({
       organizerId: req.user.id,
       plan,
@@ -113,7 +113,7 @@ export const verifyPayment = async (req, res) => {
       ),
     });
 
-    /* 🚀 ACTIVATE ORGANIZER (MAIN LOGIC) */
+    /*  ACTIVATE ORGANIZER (MAIN LOGIC) */
     await Organizer.findByIdAndUpdate(req.user.id, {
       status: "active",
       subscription: {
@@ -137,9 +137,9 @@ export const verifyPayment = async (req, res) => {
   }
 };
 
-/* ================================
-   🛡️ ADMIN: GET ALL SUBSCRIPTIONS
-================================ */
+
+  //   ADMIN: GET ALL SUBSCRIPTIONS
+
 export const getAllSubscriptions = async (req, res) => {
   try {
     const subs = await Subscription.find()

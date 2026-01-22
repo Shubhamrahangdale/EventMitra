@@ -68,37 +68,13 @@ useEffect(() => {
     fetchEvents();
   }, []);
 
-//   useEffect(() => {
-//   const fetchMyBookings = async () => {
-//     const token = localStorage.getItem("token");
-//     if (!token) return;
-
-//     try {
-//       const res = await fetch("http://localhost:2511/api/bookings/my", {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-
-//       const data = await res.json();
-
-//       // extract event IDs
-//       const ids = data.map(b => b.eventId?._id).filter(Boolean);
-//       setBookedEventIds(ids);
-//     } catch (err) {
-//       console.error("Failed to fetch bookings");
-//     }
-//   };
-
-//   fetchMyBookings();
-// }, []);
 
 useEffect(() => {
   const token = localStorage.getItem("token");
 
   const fetchMyBookings = async () => {
     if (!token) {
-      setBookedEventIds([]); // clear when logged out
+      setBookedEventIds([]); 
       return;
     }
 

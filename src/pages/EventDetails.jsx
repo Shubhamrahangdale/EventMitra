@@ -33,9 +33,7 @@ const EventDetails = () => {
   
 
 
-  /* =======================
-     FETCH EVENT (LOGIC)
-  ======================== */
+//  FETCH EVENT (LOGIC)
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -79,9 +77,7 @@ const EventDetails = () => {
     );
   }
 
-  /* =======================
-     DERIVED VALUES
-  ======================== */
+//  DERIVED VALUES
   const availableTickets = event.totalTickets - event.soldTickets;
   const ticketsPercentage =
     (event.soldTickets / event.totalTickets) * 100;
@@ -111,9 +107,9 @@ const EventDetails = () => {
 
   
 
-  /* =======================
-     UI (UNCHANGED)
-  ======================== */
+ 
+   //  UI (UNCHANGED)
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

@@ -55,10 +55,10 @@ const BookingConfirmation = () => {
   const downloadTickets = async () => {
     const html = document.documentElement;
     const wasDark = html.classList.contains("dark");
-    html.classList.remove("dark"); // force light mode for PDF
+    html.classList.remove("dark"); 
 
     const pdf = new jsPDF("p", "mm", "a4");
-    const pages = chunkArray(attendees, 5); // 5 tickets per page
+    const pages = chunkArray(attendees, 5); 
 
     setRenderForPDF(true);
 

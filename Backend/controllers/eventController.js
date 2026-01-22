@@ -1,6 +1,6 @@
 import Event from "../models/Event.js";
 
-// CREATE EVENT (subscription already validated by middleware)
+// CREATE EVENT 
 export const createEvent = async (req, res) => {
   try {
     const eventDate = new Date(req.body.date);
@@ -10,16 +10,16 @@ const eventState =
   eventDate < today ? "expired" : "upcoming";
 
     const organiser = req.organizer;
-    console.log("EVENT PAYLOAD:", req.body); // 🔥 ADD THIS
+    console.log("EVENT PAYLOAD:", req.body); 
     const event = await Event.create({
       title: req.body.title,
-      date: new Date(req.body.date), // 🔥 FIX
+      date: new Date(req.body.date), 
       time: req.body.time,
       location: req.body.location,
       city: req.body.city,
       category: req.body.category,
-      price: Number(req.body.price || 0), // 🔥 FIX
-      totalTickets: Number(req.body.totalTickets || 0), // 🔥 FIX
+      price: Number(req.body.price || 0),
+      totalTickets: Number(req.body.totalTickets || 0), 
       image: req.body.image,
       description: req.body.description,
       organizerId: organiser._id,
@@ -133,7 +133,7 @@ export const singleEvent = async (req, res) => {
       });
     }
 
-    // 🔥 expiry check
+    //  expiry check
     if (event.eventState === "expired") {
       return res.status(410).json({
         message: "This event has expired",

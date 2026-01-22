@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
-// import bcrypt from "bcryptjs";
-// import Admin from "../models/Admin.js";
 import Organizer from "../models/Organizer.js";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@eventmitra.com"; 
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+  
 /* ================= ADMIN LOGIN ================= */
 export const adminLogin = (req, res) => {
   const { email, password } = req.body;
