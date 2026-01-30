@@ -175,10 +175,10 @@ const [expandedAttendees, setExpandedAttendees] = useState({});
       const options = {
         key: data.keyId,
         amount: data.amount,
-        currency: "INR", // ✅ VERY IMPORTANT
+        currency: "INR", 
         name: "EventMitra",
         description: plan.name,
-        order_id: data.orderId,
+        order_id: data.id,
 
         handler: async function (response) {
           const verifyRes = await fetch(
